@@ -23,3 +23,12 @@ poetry env info --path
 ### Usage
 
 To add a dependency, simply run `poetry add <dependency>`
+
+### Store poetry deps in requirements.txt
+
+This is necessary for Heroku to pick up the dependencies.
+Run the following command to update the `requirements.txt`:
+
+```bash
+poetry export -f requirements.txt --output requirements.txt
+```
