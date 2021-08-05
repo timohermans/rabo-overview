@@ -16,6 +16,9 @@ factory-boy==3.2.0; python_version >= "3.6" \
 faker==8.10.3; python_version >= "3.6" \
     --hash=sha256:f27a2a5c34042752f9d5fea2a9667aed5265d7d7bdd5ce83bc03b2f8a540d148 \
     --hash=sha256:771b21ab55924867ac865f4b0c2f547c200172293b1056be16289584ef1215cb
+gunicorn==20.1.0; python_version >= "3.5" \
+    --hash=sha256:9dcc4547dbb1cb284accfb15ab5667a0e5d1881cc443e0677b4882a4067a807e \
+    --hash=sha256:e0a968b5ba15f8a328fdfd7ab1fcb5af4470c28aaf7e55df02a99bc13138e6e8
 psycopg2==2.9.1; python_version >= "3.6" \
     --hash=sha256:7f91312f065df517187134cce8e395ab37f5b601a42446bdc0f0d51773621854 \
     --hash=sha256:830c8e8dddab6b6716a4bf73a09910c7954a92f40cf1d1e702fb93c8a919cc56 \
