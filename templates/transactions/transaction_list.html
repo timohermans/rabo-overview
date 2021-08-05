@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block content %}
+    <h1>{{ month | date:"c" }}</h1>
+    <a href="?month={{ month | previous_month | date:"c" }}">back</a>
+    <a href="?month={{ month | next_month | date:"c" }}">next</a>
+
+    {% if not transactions %}
+        <div>No transactions yet. Upload them <a href="{% url 'transactions:upload' %}">here</a></div>
+    {% else %}
+        <section>
+            <h2>Totals</h2>
+            <dl>
+                <dt>Incomes</dt>
+                <dd>{{ sum_incomes }}</dd>
+                <dt>Expenses</dt>
+                <dd>{{ sum_expenses }}</dd>
+            </dl>
+        </section>
+        <section>
+            <h2>Top expenses</h2>
+            <table>
+                <tbody>
+                {% for transaction in top_expenses %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.other_party.name }}</td>
+                        <td>{{ transaction.amount }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Top incomes</h2>
+            <table>
+                <tbody>
+                {% for transaction in top_incomes %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.other_party.name }}</td>
+                        <td>{{ transaction.amount }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+
+        <section>
+            <h2>Transactions</h2>
+
+            <table>
+                <tbody>
+                {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.other_party.name }}</td>
+                        <td>{{ transaction.amount }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?month={{ month | date:"c" }}&page=1">&laquo; first</a>
+                    <a href="?month={{ month | date:"c" }}&page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?month={{ month | date:"c" }}&page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?month={{ month | date:"c" }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}
