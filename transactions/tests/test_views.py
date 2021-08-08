@@ -8,7 +8,7 @@ from django.urls import reverse
 from .factories import UserFactory, TransactionFactory
 from .utils import open_test_file
 from ..models import Transaction
-from ..views import TransactionListView, UploadTransactionsFormView
+from ..views import TransactionListView, UploadAnonymousTransactionsFormView, UploadTransactionsFormView
 
 User = get_user_model()
 
@@ -102,3 +102,29 @@ class UploadTransactionsFormViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/accounts/login/?next=/transactions/upload/')
+
+# class UploadTransactionsFormViewTestCase(TestCase):
+#     def setUp(self) -> None:
+#         self.factory = RequestFactory()
+
+#     def test_shows_results_after_successful_parse(self):
+#         post_data = {'file': open_test_file('single_dummy.csv')}
+#         request = self.factory.post(reverse('transactions:upload-anonymous'), data=post_data)
+
+#         response = UploadAnonymousTransactionsFormView.as_view()(request)
+
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(f'{response.url}/', reverse('transactions:upload-anonymous'))
+#         self.assertEqual(len(Transaction.objects.all()), 0)
+
+#     def test_returns_when_file_is_faulty(self):
+#         post_data = {'file': open_test_file('data.rtf')}
+#         request = self.factory.post(reverse('transactions:upload-anonymous'), data=post_data)
+
+#         response = UploadAnonymousTransactionsFormView.as_view()(request)
+
+#         self.assertEqual(response.status_code, 200)
+#         self.assertContains(response, 'File extension “rtf” is not allowed')
+
+#     def test_returns_error_when_more_than_one_month_is_uploaded(self):
+#         pass
