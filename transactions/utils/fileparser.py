@@ -24,19 +24,24 @@ class CreationReport:
         self.accounts = []
 
 
-class AnonymousStorageHandler():
+class AnonymousStorageHandler:
     def __init__(self):
         from transactions.models import Account, Transaction
+
         self.account = Account
         self.transaction = Transaction
         self.accounts = []
         self.transactions = []
 
     def does_transaction_already_exist(self, transaction_code: str) -> bool:
-        return next(filter(lambda t: t.code == transaction_code, self.transactions), None)
+        return next(
+            filter(lambda t: t.code == transaction_code, self.transactions), None
+        )
 
     def get_account_by(self, account_number: str):
-        return next(filter(lambda a: a.account_number == account_number, self.accounts), None)
+        return next(
+            filter(lambda a: a.account_number == account_number, self.accounts), None
+        )
 
     def update_receiver(self, receiver):
         receiver.is_user_owner = True
@@ -61,7 +66,10 @@ class ModelStorageHandler:
         self.transaction = Transaction
 
     def does_transaction_already_exist(self, transaction_code: str) -> bool:
-        return len(self.transaction.objects.filter(code=transaction_code, user=self.user)) > 0
+        return (
+            len(self.transaction.objects.filter(code=transaction_code, user=self.user))
+            > 0
+        )
 
     def get_account_by(self, account_number: str):
         account = self.account.objects.filter(
@@ -159,7 +167,7 @@ class FileParser:
             elif parse_result == ParseResult.DUPLICATE:
                 report.amount_duplicate += 1
 
-        report.transactions = getattr(self.storage, 'transactions', None)
-        report.accounts = getattr(self.storage, 'accounts', None)
+        report.transactions = getattr(self.storage, "transactions", None)
+        report.accounts = getattr(self.storage, "accounts", None)
 
         return report
