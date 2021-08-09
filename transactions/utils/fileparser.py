@@ -1,7 +1,6 @@
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-from typing import Protocol
 
 from django.contrib.auth import get_user_model
 
@@ -21,23 +20,36 @@ class CreationReport:
         self.amount_success = 0
         self.amount_duplicate = 0
         self.amount_failed = 0
+        self.transactions = []
+        self.accounts = []
 
 
-class AnonymousStorageHandler(Protocol):
-    def does_transaction_already_exist(transaction_code: str) -> bool:
-        return False
+class AnonymousStorageHandler():
+    def __init__(self):
+        from transactions.models import Account, Transaction
+        self.account = Account
+        self.transaction = Transaction
+        self.accounts = []
+        self.transactions = []
 
-    def get_account_by(account_number: str):
-        pass
+    def does_transaction_already_exist(self, transaction_code: str) -> bool:
+        return next(filter(lambda t: t.code == transaction_code, self.transactions), None)
 
-    def update_receiver(receiver):
-        pass
+    def get_account_by(self, account_number: str):
+        return next(filter(lambda a: a.account_number == account_number, self.accounts), None)
 
-    def create_account(**kwargs):
-        pass
+    def update_receiver(self, receiver):
+        receiver.is_user_owner = True
 
-    def create_transaction(**kwargs):
-        pass
+    def create_account(self, **kwargs):
+        account = self.account(**kwargs)
+        self.accounts.append(account)
+        return account
+
+    def create_transaction(self, **kwargs):
+        transaction = self.transaction(**kwargs)
+        self.transactions.append(transaction)
+        return transaction
 
 
 class ModelStorageHandler:
@@ -146,5 +158,8 @@ class FileParser:
                 report.amount_success += 1
             elif parse_result == ParseResult.DUPLICATE:
                 report.amount_duplicate += 1
+
+        report.transactions = getattr(self.storage, 'transactions', None)
+        report.accounts = getattr(self.storage, 'accounts', None)
 
         return report
