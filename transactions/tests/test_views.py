@@ -86,7 +86,7 @@ class UploadTransactionsFormViewTestCase(TestCase):
         self.assertEqual(len(Transaction.objects.all()), 1)
 
     def test_returns_when_file_is_faulty(self):
-        post_data = {'file': open_test_file('data.rtf')}
+        post_data = {'file': open_test_file('data.rtf')} 
         request = self.factory.post(reverse('transactions:upload'), data=post_data)
         request.user = self.user
 
@@ -103,19 +103,19 @@ class UploadTransactionsFormViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/accounts/login/?next=/transactions/upload/')
 
-# class UploadTransactionsFormViewTestCase(TestCase):
-#     def setUp(self) -> None:
-#         self.factory = RequestFactory()
+class UploadTransactionsAnonymousFormViewTestCase(TestCase):
+    def setUp(self) -> None:
+        self.factory = RequestFactory()
 
-#     def test_shows_results_after_successful_parse(self):
-#         post_data = {'file': open_test_file('single_dummy.csv')}
-#         request = self.factory.post(reverse('transactions:upload-anonymous'), data=post_data)
+    def test_shows_results_after_successful_parse(self):
+        post_data = {'file': open_test_file('single_dummy.csv')}
+        request = self.factory.post(reverse('transactions:upload-anonymous'), data=post_data)
 
-#         response = UploadAnonymousTransactionsFormView.as_view()(request)
+        response = UploadAnonymousTransactionsFormView.as_view()(request)
 
-#         self.assertEqual(response.status_code, 200)
-#         self.assertEqual(f'{response.url}/', reverse('transactions:upload-anonymous'))
-#         self.assertEqual(len(Transaction.objects.all()), 0)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(Transaction.objects.all()), 0)
+        self.assertContains(response, "Kerkhoffs")
 
 #     def test_returns_when_file_is_faulty(self):
 #         post_data = {'file': open_test_file('data.rtf')}

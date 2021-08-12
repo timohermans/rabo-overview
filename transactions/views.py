@@ -1,10 +1,13 @@
 from datetime import date
 from io import TextIOWrapper
+from transactions.utils.fileparser import AnonymousStorageHandler, FileParser
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.views.generic.edit import FormView
+from django.urls import reverse
+from django.shortcuts import render
 
 from .forms import TransactionFileForm
 from .models import Transaction
@@ -21,7 +24,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
         date_range = get_start_end_date_from(month)
         return Transaction.objects.filter(
             date__gte=date_range[0], date__lte=date_range[1], user=self.request.user
-        )
+        ).order_by("-date")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -59,8 +62,15 @@ class UploadTransactionsFormView(LoginRequiredMixin, FormView):
 
 class UploadAnonymousTransactionsFormView(FormView):
     # TODO: Actually test the implementation
-    template_name = "transactions/anonymous-upload.html"
+    template_name = "transactions/anonymous_upload.html"
     form_class = TransactionFileForm
+    success_url = "/"
 
     def form_valid(self, form):
-        pass
+        file = TextIOWrapper(form.files["file"].file, encoding="latin1")
+        results = FileParser(AnonymousStorageHandler()).parse(file)
+        return render(
+            self.request,
+            UploadAnonymousTransactionsFormView.template_name,
+            {"results": results},
+        )

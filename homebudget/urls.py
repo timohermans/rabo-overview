@@ -20,7 +20,7 @@ from transactions import views
 import debug_toolbar
 
 urlpatterns = [
-    path("", views.TransactionListView.as_view(), name="home"),
+    path("", views.UploadAnonymousTransactionsFormView.as_view(), name="home"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
     path("transactions/", include("transactions.urls", namespace="transactions")),

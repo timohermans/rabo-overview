@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if form %}
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	{{ form }}
+	<div>
+		<input type="submit" value="Upload" />
+	</div>
+</form>
+{% endif %}
+
+{% if results %}
+<section>
+	<h2>Transactions</h2>
+
+	<table>
+		<tbody>
+			{% for transaction in results.transactions %}
+			<tr>
+				<td>{{ transaction.date }}</td>
+				<td>{{ transaction.other_party.name }}</td>
+				<td>{{ transaction.amount }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</section>
+{% endif %}
+{% endblock %}
