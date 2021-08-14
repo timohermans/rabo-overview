@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from enum import Enum
 from transactions.models import Account, Transaction
-from typing import Any, Dict, List, Protocol, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Protocol, Optional, TYPE_CHECKING, TextIO
 
 from django.contrib.auth import get_user_model
 
@@ -108,7 +108,7 @@ class FileParser:
     def __init__(self, storage_handler: StorageHandler) -> None:
         self.storage = storage_handler
 
-    def parse(self, file: Any) -> CreationReport:
+    def parse(self, file: TextIO) -> CreationReport:
         results = [
             self.__create_transaction_from(transaction_map)
             for transaction_map in read_raw_transaction_data_from(file)
