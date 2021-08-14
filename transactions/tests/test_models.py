@@ -1,204 +1,89 @@
 from datetime import date
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+import pytest
+from django.contrib.auth import get_user_model
+from transactions.models import Account, Transaction
+from transactions.tests.factories import UserFactory
+from transactions.tests.utils import open_test_file
 from transactions.utils.fileparser import FileParser, ModelStorageHandler
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
+if TYPE_CHECKING:
+    from accounts.models import User
+else:
+    User = get_user_model()
 
-from transactions.models import Transaction, Account
-from transactions.tests.factories import UserFactory, AccountFactory, TransactionFactory, OtherPartyFactory, \
-    ReceiverFactory
-from transactions.tests.utils import open_test_file
-
-User = get_user_model()
+pytestmark = pytest.mark.django_db
 
 
-class TransactionTestCase(TestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        pass
-
-    def test_creates_transaction_from_file(self) -> None:
-        file = open_test_file('single_dummy.csv')
-        result = FileParser(ModelStorageHandler(self.user)).parse(file)
-
-        transaction: Optional[Transaction] = Transaction.objects.first()
-
-        self.assertEqual(result.amount_success, 1)
-        self.assertEqual(result.amount_duplicate, 0)
-        self.assertEqual(result.amount_failed, 0)
-
-        self.assertIsNotNone(transaction)
-        if transaction is not None:
-            self.assertEqual(transaction.date, date(2019, 9, 1))
-            self.assertEqual(transaction.amount, Decimal('2.5'))
-            self.assertEqual(transaction.code, 'NL11RABO0104955555000000000000007213')
-            self.assertEqual(transaction.currency, 'EUR')
-            self.assertEqual(transaction.memo, 'Spotify12')
-            self.assertEqual(transaction.user.id, self.user.id)
-
-            self.assertEqual(transaction.receiver.name, 'Own account')
-            self.assertEqual(transaction.receiver.account_number, 'NL11RABO0104955555')
-            self.assertEqual(transaction.other_party.name, 'J.M.G. Kerkhoffs eo')
-            self.assertEqual(transaction.other_party.account_number, 'NL42RABO0114164838')
-
-    def test_skips_duplicate_accounts(self) -> None:
-        file = open_test_file('duplicate_account.csv')
-
-        result = FileParser(ModelStorageHandler(self.user)).parse(file)
-
-        self.assertEqual(result.amount_success, 2)
-        self.assertEqual(len(Transaction.objects.all()), 2)
-        self.assertEqual(len(Account.objects.all()), 2)
-
-    def test_marks_transaction_as_duplicate(self) -> None:
-        other_party = Account.objects.create(name='J.M.G. Kerkhoffs eo', account_number='NL42RABO0114164838',
-                                             is_user_owner=False, user=self.user)
-        receiver = Account.objects.create(name='Own account', account_number='NL11RABO0104955555',
-                                          is_user_owner=True, user=self.user)
-        transaction = Transaction(
-            code='NL11RABO0104955555000000000000007214',
-            date=date(2019, 9, 1),
-            memo='Spotify12',
-            amount=Decimal('2.5'),
-            currency='EUR',
-            receiver=receiver,
-            other_party=other_party,
-            user=self.user
-        )
-        transaction.save()
-
-        file = open_test_file('duplicate_transaction.csv')
-
-        result = FileParser(ModelStorageHandler(self.user)).parse(file)
-
-        self.assertEqual(result.amount_success, 2)
-        self.assertEqual(result.amount_duplicate, 1)
+@pytest.fixture
+def user() -> User:
+    return UserFactory()
 
 
-class TransactionStatisticsTestCase(TestCase):
-    def setUp(self) -> None:
-        self.user = UserFactory()
+def test_creates_transaction_from_file(user: User) -> None:
+    file = open_test_file("single_dummy.csv")
+    result = FileParser(ModelStorageHandler(user)).parse(file)
 
-    def test_gets_user_owned_top_incomes(self) -> None:
-        receiver = ReceiverFactory(user=self.user)
-        other_party = OtherPartyFactory(user=self.user)
-        paying_account = OtherPartyFactory(user=self.user, is_user_owner=True)
-        TransactionFactory(date=date(2021, 6, 1), receiver=receiver, other_party=other_party, amount=Decimal('20'))
-        TransactionFactory(date=date(2021, 6, 1), receiver=receiver, other_party=other_party, amount=Decimal('-20'))
+    transaction: Optional[Transaction] = Transaction.objects.first()
 
-        incomes = Transaction.statistics.top_incomes(date(2021, 6, 1), self.user)
-        expenses = Transaction.statistics.top_expenses(date(2021, 6, 1), self.user)
+    assert result.amount_success == 1
+    assert result.amount_duplicate == 0
+    assert result.amount_failed == 0
 
-        self.assertEqual(0, len(incomes))
-        self.assertEqual(0, len(expenses))
+    assert transaction is not None
+    assert transaction.date == date(2019, 9, 1)
+    assert transaction.amount == Decimal("2.5")
+    assert transaction.code == "NL11RABO0104955555000000000000007213"
+    assert transaction.currency == "EUR"
+    assert transaction.memo == "Spotify12"
+    assert transaction.user.id == user.id
 
-    def test_gets_top_incomes_sorted(self) -> None:
-        receiver = ReceiverFactory(user=self.user)
-        other_party = OtherPartyFactory(user=self.user)
-        paying_account = OtherPartyFactory(user=self.user, is_user_owner=True)
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('20'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('70'))
-        TransactionFactory(date=date(2021, 6, 1), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('470'))
-        TransactionFactory(date=date(2021, 6, 30), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('170'))
-        TransactionFactory(date=date(2021, 6, 20), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('1170'))
-        TransactionFactory(date=date(2021, 7, 1), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('1170'))
-        TransactionFactory(date=date(2021, 6, 11), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('2070'))
-        TransactionFactory(date=date(2021, 6, 1), user=self.user, receiver=receiver, other_party=paying_account,
-                           amount=Decimal('5070'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-70'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-25.25'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-100'))
+    assert transaction.receiver.name == "Own account"
+    assert transaction.receiver.account_number == "NL11RABO0104955555"
+    assert transaction.other_party.name == "J.M.G. Kerkhoffs eo"
+    assert transaction.other_party.account_number == "NL42RABO0114164838"
 
-        results = Transaction.statistics.top_incomes(date(2021, 6, 1), self.user)
-        self.assertEqual(5, len(results))
-        self.assertEqual(Decimal('2070'), results[0].amount)
-        self.assertEqual(Decimal('1170'), results[1].amount)
-        self.assertEqual(Decimal('470'), results[2].amount)
-        self.assertEqual(Decimal('170'), results[3].amount)
-        self.assertEqual(Decimal('70'), results[4].amount)
 
-    def test_gets_top_expenses(self) -> None:
-        receiver = ReceiverFactory(user=self.user)
-        other_party = OtherPartyFactory(user=self.user)
-        paying_account = OtherPartyFactory(user=self.user, is_user_owner=True)
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('20'))
-        TransactionFactory(date=date(2021, 6, 1), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('70'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-470'))
-        TransactionFactory(date=date(2021, 6, 1), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-170'))
-        TransactionFactory(date=date(2021, 6, 30), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-1170'))
-        TransactionFactory(date=date(2021, 7, 1), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-1170'))
-        TransactionFactory(date=date(2021, 6, 20), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-2070'))
-        TransactionFactory(date=date(2021, 6, 20), user=self.user, receiver=receiver, other_party=paying_account,
-                           amount=Decimal('-5070'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-70'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-25.25'))
-        TransactionFactory(date=date(2021, 6, 10), user=self.user, receiver=receiver, other_party=other_party,
-                           amount=Decimal('-100'))
+def test_skips_duplicate_accounts(user: User) -> None:
+    file = open_test_file("duplicate_account.csv")
 
-        results = Transaction.statistics.top_expenses(date(2021, 6, 2), self.user)
-        self.assertEqual(5, len(results))
-        self.assertEqual(Decimal('-2070'), results[0].amount)
-        self.assertEqual(Decimal('-1170'), results[1].amount)
-        self.assertEqual(Decimal('-470'), results[2].amount)
-        self.assertEqual(Decimal('-170'), results[3].amount)
-        self.assertEqual(Decimal('-100'), results[4].amount)
+    result = FileParser(ModelStorageHandler(user)).parse(file)
 
-    def test_gets_sum_external_expenses_and_incomes(self) -> None:
-        user = UserFactory()
-        wrong_user = UserFactory()
-        month = date(2021, 6, 1)
-        wrong_month = date(2021, 7, 1)
-        external_party = OtherPartyFactory(is_user_owner=False, user=user)
-        savings_account = AccountFactory(is_user_owner=True, user=user)
-        user_bank_account = ReceiverFactory(user=user)
+    assert result.amount_success == 2
+    assert len(Transaction.objects.all()) == 2
+    assert len(Account.objects.all()) == 2
 
-        # expenses that are from external sources, like shopping
-        TransactionFactory(date=month, user=user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('-20'))
-        TransactionFactory(date=month, user=user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('-40'))
 
-        # incomes that are from external sources, like salary
-        TransactionFactory(date=month, user=user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('4000'))
-        TransactionFactory(date=month, user=user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('2500'))
+def test_marks_transaction_as_duplicate(user: User) -> None:
+    other_party = Account.objects.create(
+        name="J.M.G. Kerkhoffs eo",
+        account_number="NL42RABO0114164838",
+        is_user_owner=False,
+        user=user,
+    )
+    receiver = Account.objects.create(
+        name="Own account",
+        account_number="NL11RABO0104955555",
+        is_user_owner=True,
+        user=user,
+    )
+    transaction = Transaction(
+        code="NL11RABO0104955555000000000000007214",
+        date=date(2019, 9, 1),
+        memo="Spotify12",
+        amount=Decimal("2.5"),
+        currency="EUR",
+        receiver=receiver,
+        other_party=other_party,
+        user=user,
+    )
+    transaction.save()
 
-        # transactions that shouldn't be summed,
-        # e.g. wrong month, user or transactions to your savings account
-        TransactionFactory(date=month, user=user, receiver=user_bank_account, other_party=savings_account,
-                           amount=Decimal('-400'))
-        TransactionFactory(date=month, user=wrong_user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('-600'))
-        TransactionFactory(date=wrong_month, user=user, receiver=user_bank_account, other_party=external_party,
-                           amount=Decimal('-700'))
+    file = open_test_file("duplicate_transaction.csv")
 
-        # act
-        overview = Transaction.statistics.get_external_totals(month, user)
+    result = FileParser(ModelStorageHandler(user)).parse(file)
 
-        self.assertEqual(Decimal('-60'), overview['expenses'])
-        self.assertEqual(Decimal('6500'), overview['incomes'])
-
-    # def test_gets_sum_external_incomes(self):
-        # pass
+    assert result.amount_success == 2
+    assert result.amount_duplicate == 1

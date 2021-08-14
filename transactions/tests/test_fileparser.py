@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from unittest import TestCase
 
 from transactions.tests.utils import open_test_file
 from transactions.utils.fileparser import AnonymousStorageHandler, FileParser
@@ -54,5 +53,4 @@ def test_marks_second_transaction_as_user_owner() -> None:
     savings_account = next(filter(lambda a: a is not None and a.name == "Savings", result.accounts), None)
 
     assert savings_account is not None
-    if savings_account is None: raise RuntimeError()
     assert savings_account.is_user_owner == True

@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class Account(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=70)
     account_number = models.CharField(max_length=36)
     is_user_owner = models.BooleanField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
