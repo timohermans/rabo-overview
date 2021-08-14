@@ -46,3 +46,6 @@ class FileParserTestCase(TestCase):
 
         self.assertEqual(result.amount_success, 2)
         self.assertEqual(result.amount_duplicate, 1)
+
+    def test_marks_second_transaction_as_user_owner(self) -> None:
+        pass
