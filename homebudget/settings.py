@@ -20,7 +20,7 @@ env = environ.Env(
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env_file = path.join(BASE_DIR, '.env')
+env_file = str(BASE_DIR / '.env')
 if path.isfile(env_file):
     environ.Env.read_env(env_file)
 
@@ -65,7 +65,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            path.join(BASE_DIR, 'templates/')
+            str(BASE_DIR / 'templates/')
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -123,7 +123,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 
 # Default primary key field type
@@ -136,3 +136,7 @@ if DEBUG:
     INTERNAL_IPS = ['127.0.0.1', 'localhost']
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INSTALLED_APPS += ['debug_toolbar']
+
+# Static typing
+
+MYPY_DJANGO_CONFIG = str(BASE_DIR / "mypy.ini")

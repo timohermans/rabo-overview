@@ -1,10 +1,15 @@
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from transactions.models import Account, Transaction
+from typing import Any, Dict, List, Protocol, Optional, TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 
 from .file import read_raw_transaction_data_from
+
+if TYPE_CHECKING:
+    from accounts.models import User as UserType
 
 User = get_user_model()
 
@@ -16,51 +21,56 @@ class ParseResult(Enum):
 
 
 class CreationReport:
-    def __init__(self):
+    def __init__(self) -> None:
         self.amount_success = 0
         self.amount_duplicate = 0
         self.amount_failed = 0
-        self.transactions = []
-        self.accounts = []
+        self.transactions: List[Transaction] = [] 
+        self.accounts: List[Account] = []
 
+
+class StorageHandler(Protocol):
+    def does_transaction_already_exist(self, transaction_code: str) -> bool: ...
+    def get_account_by(self, account_number: str) -> Optional[Account]: ...
+    def update_receiver(self, receiver: Account) -> Account: ...
+    def create_account(self, **kwargs: Any) -> Account: ...
+    def create_transaction(self, **kwargs: Any) -> Transaction: ...
+        
 
 class AnonymousStorageHandler:
-    def __init__(self):
-        from transactions.models import Account, Transaction
-
+    def __init__(self) -> None:
         self.account = Account
         self.transaction = Transaction
-        self.accounts = []
-        self.transactions = []
+        self.accounts: List[Account] = []
+        self.transactions: List[Transaction] = []
 
     def does_transaction_already_exist(self, transaction_code: str) -> bool:
         return next(
             filter(lambda t: t.code == transaction_code, self.transactions), None
-        )
+        ) != None
 
-    def get_account_by(self, account_number: str):
+    def get_account_by(self, account_number: str) -> Optional[Account]:
         return next(
-            filter(lambda a: a.account_number == account_number, self.accounts), None
+            filter(lambda a: a is not None and a.account_number == account_number, self.accounts), None
         )
 
-    def update_receiver(self, receiver):
+    def update_receiver(self, receiver: Account) -> Account:
         receiver.is_user_owner = True
+        return receiver
 
-    def create_account(self, **kwargs):
+    def create_account(self, **kwargs: dict[str, Any]) -> Account:
         account = self.account(**kwargs)
         self.accounts.append(account)
         return account
 
-    def create_transaction(self, **kwargs):
+    def create_transaction(self, **kwargs: dict[str, Any]) -> Transaction:
         transaction = self.transaction(**kwargs)
         self.transactions.append(transaction)
         return transaction
 
 
 class ModelStorageHandler:
-    def __init__(self, user: User):
-        from transactions.models import Account, Transaction
-
+    def __init__(self, user: UserType) -> None:
         self.user = user
         self.account = Account
         self.transaction = Transaction
@@ -71,34 +81,34 @@ class ModelStorageHandler:
             > 0
         )
 
-    def get_account_by(self, account_number: str):
+    def get_account_by(self, account_number: str) -> Optional[Account]:
         account = self.account.objects.filter(
             account_number=account_number, user=self.user
         )
         return account[0] if account else None
 
-    def update_receiver(self, receiver):
+    def update_receiver(self, receiver: Account) -> Account:
         if not receiver.is_user_owner:
             receiver.is_user_owner = True
             receiver.save()
         return receiver
 
-    def create_account(self, **kwargs):
+    def create_account(self, **kwargs: dict[str, Any]) -> Account:
         account = self.account(**kwargs, user=self.user)
         account.save()
         return account
 
-    def create_transaction(self, **kwargs):
+    def create_transaction(self, **kwargs: dict[str, Any]) -> Transaction:
         transaction = self.transaction(**kwargs, user=self.user)
         transaction.save()
         return transaction
 
 
 class FileParser:
-    def __init__(self, storage_handler: AnonymousStorageHandler) -> None:
+    def __init__(self, storage_handler: StorageHandler) -> None:
         self.storage = storage_handler
 
-    def parse(self, file) -> CreationReport:
+    def parse(self, file: Any) -> CreationReport:
         results = [
             self.__create_transaction_from(transaction_map)
             for transaction_map in read_raw_transaction_data_from(file)
@@ -106,7 +116,7 @@ class FileParser:
 
         return self.__create_result_report_from(results)
 
-    def __create_transaction_from(self, transaction_map):
+    def __create_transaction_from(self, transaction_map: Dict[str, str]) -> ParseResult:
         transaction_code = self.__map_raw_data_to_transaction_code(transaction_map)
 
         if self.storage.does_transaction_already_exist(transaction_code):
@@ -117,11 +127,11 @@ class FileParser:
         self.__create_transaction(transaction_map, receiver, other_party)
         return ParseResult.SUCCESS
 
-    def __map_raw_data_to_transaction_code(self, raw_map):
+    def __map_raw_data_to_transaction_code(self, raw_map: Dict[str, str]) -> str:
         return raw_map["IBAN/BBAN"] + raw_map["Volgnr"]
 
-    def __get_or_create_receiver(self, raw_map):
-        receiver_kwargs = {
+    def __get_or_create_receiver(self, raw_map: Dict[str, str]) -> Account:
+        receiver_kwargs: dict[str, Any] = {
             "name": "Own account",
             "account_number": raw_map["IBAN/BBAN"],
             "is_user_owner": True,
@@ -133,8 +143,8 @@ class FileParser:
             else self.storage.create_account(**receiver_kwargs)
         )
 
-    def __get_or_create_other_party(self, raw_map):
-        other_party_kwargs = {
+    def __get_or_create_other_party(self, raw_map: Dict[str, str]) -> Account:
+        other_party_kwargs: dict[str, Any] = {
             "name": raw_map["Naam tegenpartij"],
             "account_number": raw_map["Tegenrekening IBAN/BBAN"],
             "is_user_owner": False,
@@ -146,7 +156,7 @@ class FileParser:
             else self.storage.create_account(**other_party_kwargs)
         )
 
-    def __create_transaction(self, raw_map, receiver, other_party):
+    def __create_transaction(self, raw_map: Dict[str, str], receiver: Account, other_party: Account) -> Transaction:
         transaction = self.storage.create_transaction(
             date=date.fromisoformat(raw_map["Datum"]),
             code=self.__map_raw_data_to_transaction_code(raw_map),
@@ -158,7 +168,7 @@ class FileParser:
         )
         return transaction
 
-    def __create_result_report_from(self, results):
+    def __create_result_report_from(self, results: List[ParseResult]) -> CreationReport:
         report = CreationReport()
 
         for parse_result in results:
@@ -167,7 +177,7 @@ class FileParser:
             elif parse_result == ParseResult.DUPLICATE:
                 report.amount_duplicate += 1
 
-        report.transactions = getattr(self.storage, "transactions", None)
-        report.accounts = getattr(self.storage, "accounts", None)
+        report.transactions = getattr(self.storage, "transactions", [])
+        report.accounts = getattr(self.storage, "accounts", [])
 
         return report

@@ -1,8 +1,6 @@
-from datetime import date
 from decimal import Decimal
 from random import randint
 import factory.django
-import faker
 from django.contrib.auth import get_user_model
 
 from transactions.models import Account, Transaction

@@ -42,7 +42,7 @@ class TransactionListViewTestCase(TestCase):
         self.assertContains(response, transaction.other_party.name)
         self.assertNotContains(response, transaction_excluded.other_party.name)
 
-    def test_gets_previous_months_transactions_by_default(self):
+    def test_gets_previous_months_transactions_by_default(self) -> None:
         now = date.today()
         transaction = TransactionFactory(date=now - relativedelta(months=1), user=self.user)
         transaction_excluded = TransactionFactory(date=now, user=self.user)
@@ -55,7 +55,7 @@ class TransactionListViewTestCase(TestCase):
         self.assertContains(response, transaction.other_party.name)
         self.assertNotContains(response, transaction_excluded.other_party.name)
 
-    def test_gets_only_user_owned_transactions(self):
+    def test_gets_only_user_owned_transactions(self) -> None:
         now = date.today() - relativedelta(months=1)
         transaction = TransactionFactory(date=now, user=self.user)
         transaction_excluded = TransactionFactory(date=now)
@@ -74,7 +74,7 @@ class UploadTransactionsFormViewTestCase(TestCase):
         self.user = UserFactory()
         self.factory = RequestFactory()
 
-    def test_redirects_after_successful_upload(self):
+    def test_redirects_after_successful_upload(self) -> None:
         post_data = {'file': open_test_file('single_dummy.csv')}
         request = self.factory.post(reverse('transactions:upload'), data=post_data)
         request.user = self.user
@@ -85,7 +85,7 @@ class UploadTransactionsFormViewTestCase(TestCase):
         self.assertEqual(f'{response.url}/', reverse('transactions:index'))
         self.assertEqual(len(Transaction.objects.all()), 1)
 
-    def test_returns_when_file_is_faulty(self):
+    def test_returns_when_file_is_faulty(self) -> None:
         post_data = {'file': open_test_file('data.rtf')} 
         request = self.factory.post(reverse('transactions:upload'), data=post_data)
         request.user = self.user
@@ -95,7 +95,7 @@ class UploadTransactionsFormViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'File extension “rtf” is not allowed')
 
-    def test_must_be_logged_in(self):
+    def test_must_be_logged_in(self) -> None:
         c = Client()
 
         response = c.post(reverse('transactions:upload'), data={})
@@ -107,7 +107,7 @@ class UploadTransactionsAnonymousFormViewTestCase(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
 
-    def test_shows_results_after_successful_parse(self):
+    def test_shows_results_after_successful_parse(self) -> None:
         post_data = {'file': open_test_file('single_dummy.csv')}
         request = self.factory.post(reverse('transactions:upload-anonymous'), data=post_data)
 

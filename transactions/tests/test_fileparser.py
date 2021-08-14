@@ -7,7 +7,7 @@ from transactions.utils.fileparser import AnonymousStorageHandler, FileParser
 
 
 class FileParserTestCase(TestCase):
-    def test_creates_transaction_from_file(self):
+    def test_creates_transaction_from_file(self) -> None:
         file = open_test_file("single_dummy.csv")
         result = FileParser(AnonymousStorageHandler()).parse(file)
 
@@ -30,7 +30,7 @@ class FileParserTestCase(TestCase):
         self.assertEqual(transaction.other_party.name, "J.M.G. Kerkhoffs eo")
         self.assertEqual(transaction.other_party.account_number, "NL42RABO0114164838")
 
-    def test_skips_duplicate_accounts(self):
+    def test_skips_duplicate_accounts(self) -> None:
         file = open_test_file('duplicate_account.csv')
 
         result = FileParser(AnonymousStorageHandler()).parse(file)
@@ -39,7 +39,7 @@ class FileParserTestCase(TestCase):
         self.assertEqual(len(result.transactions), 2)
         self.assertEqual(len(result.accounts), 2)
 
-    def test_marks_transaction_as_duplicate(self):
+    def test_marks_transaction_as_duplicate(self) -> None:
         file = open_test_file('duplicate_transaction.csv')
 
         result = FileParser(AnonymousStorageHandler()).parse(file)

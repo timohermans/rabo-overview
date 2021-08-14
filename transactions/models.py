@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from transactions.managers import CreationManager, StatisticsManager
+from transactions.managers import StatisticsManager
 
 User = get_user_model()
 
@@ -18,7 +18,6 @@ class Account(models.Model):
 
 class Transaction(models.Model):
     objects = models.Manager()
-    creators = CreationManager()
     statistics = StatisticsManager()
 
     date = models.DateField()

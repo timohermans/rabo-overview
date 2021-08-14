@@ -5,5 +5,5 @@ from typing import List
 register = template.Library()
 
 @register.filter
-def top_expenses(transactions: List[Transaction]):
+def top_expenses(transactions: List[Transaction]) -> List[Transaction]:
 	pass
