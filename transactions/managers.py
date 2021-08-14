@@ -13,9 +13,8 @@ from transactions.utils.date import get_start_end_date_from
 
 if TYPE_CHECKING:
     from accounts.models import User as UserType
-
-User = get_user_model()
-
+else:
+    UserType = get_user_model()
 
 class ParseResult(Enum):
     SUCCESS = 1

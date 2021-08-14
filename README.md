@@ -2,33 +2,19 @@
 
 The I don't know how manieth time I created this project. This time trying to match logic across all the projects
 
-## Virtual environment with Poetry
+## Testing
 
-[Poetry](https://python-poetry.org/) is used for managing the dependencies of the project.
+Testing is done with pytest. The biggest reason for this is to support VsCode.
+The default unittest framework of Python doesn't work with `python manage.py`.
+See [the GitHub issue](https://github.com/microsoft/vscode-python/issues/73) for more info.
+At the time of writing this issue is still open
 
-### installation
+### Pytest will not recreate the DB. Be aware when doing schema changes
 
-To install dependencies, simply run the following commands:
-
-```zsh
-poetry install
-```
-
-For `Vscode` support, run the command below and add the output to `Venv paths` in the Vscode user settings:
-
-```zsh
-poetry env info --path
-```
-
-### Usage
-
-To add a dependency, simply run `poetry add <dependency>`
-
-### Store poetry deps in requirements.txt
-
-This is necessary for Heroku to pick up the dependencies.
-Run the following command to update the `requirements.txt`:
+In `pytest.ini` the setting `addopts = --reuse-db` is added.
+This causes the test suite to not recreate the database if it already exists.
+**When creating a new migration, run pytest once as follows**:
 
 ```bash
-poetry export -f requirements.txt --output requirements.txt
+pytest --create-db
 ```

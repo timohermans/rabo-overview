@@ -10,8 +10,8 @@ from .file import read_raw_transaction_data_from
 
 if TYPE_CHECKING:
     from accounts.models import User as UserType
-
-User = get_user_model()
+else:
+    UserType = get_user_model()
 
 
 class ParseResult(Enum):

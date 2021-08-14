@@ -3,6 +3,7 @@ from io import TextIOWrapper
 from typing import Dict, TYPE_CHECKING, Any
 
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.query import QuerySet
 from django.http.response import HttpResponse
@@ -20,6 +21,8 @@ from .utils.date import get_start_end_date_from
 
 if TYPE_CHECKING:
     from accounts.models import User
+else:
+    User = get_user_model()
 
 
 class TransactionListView(LoginRequiredMixin, ListView):
@@ -60,7 +63,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
         return month
 
 
-class UploadTransactionsFormView(LoginRequiredMixin, FormView[TransactionFileForm]):
+class UploadTransactionsFormView(LoginRequiredMixin, FormView):
     template_name = "transactions/upload.html"
     success_url = "/transactions"
     form_class = TransactionFileForm
@@ -73,7 +76,7 @@ class UploadTransactionsFormView(LoginRequiredMixin, FormView[TransactionFileFor
         return super().form_valid(form)
 
 
-class UploadAnonymousTransactionsFormView(FormView[TransactionFileForm]):
+class UploadAnonymousTransactionsFormView(FormView):
     # TODO: Actually test the implementation
     template_name = "transactions/anonymous_upload.html"
     form_class = TransactionFileForm
