@@ -18,3 +18,15 @@ This causes the test suite to not recreate the database if it already exists.
 ```bash
 pytest --create-db
 ```
+
+## Database
+
+PostgreSQL is used as database provider.
+
+### Windows WSL
+
+Note that on my WSL 2, postgresql is turned off by default. Enable it by doing the following:
+
+```bash
+sudo service postgresql start
+```
