@@ -53,4 +53,5 @@ def test_marks_second_transaction_as_user_owner() -> None:
     savings_account = next(filter(lambda a: a is not None and a.name == "Savings", result.accounts), None)
 
     assert savings_account is not None
+    assert len(result.accounts) == 3
     assert savings_account.is_user_owner == True
