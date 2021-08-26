@@ -1,0 +1,19 @@
+<section class="box stack">
+	<div class="stack" style="--space: var(--s0)">
+		<h2>{{ title }}</h2>
+		{% if sub_title %}
+		<h3>{{ sub_title }}</h3>
+		{% endif %}
+	</div>
+	<div class="stack">
+		{% for transaction in transactions%}
+		<div class="cluster" style="--justify:space-between; --align:flex-start;">
+			<div>
+				<h4>{{ transaction.other_party.name }}</h4>
+				<h5>{{ transaction.date }}</h5>
+			</div>
+			<div>{{ transaction.amount }}</div>
+		</div>
+		{% endfor %}
+	</div>
+</section>

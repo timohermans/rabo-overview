@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load statistics %}
+{% load overviews %}
 
 {% block content %}
 {% if form %}
@@ -12,20 +14,28 @@
 {% endif %}
 
 {% if results %}
-<section>
-	<h2>Transactions</h2>
+<div class="center">
+	<div class="stack">
+		{% show_transactions_box results.transactions|top_expenses:5 'Uitgaven' 'Top 5 grootste uitgaven' %}
 
-	<table>
-		<tbody>
-			{% for transaction in results.transactions %}
-			<tr>
-				<td>{{ transaction.date }}</td>
-				<td>{{ transaction.other_party.name }}</td>
-				<td>{{ transaction.amount }}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-</section>
+		{% show_transactions_box results.transactions|top_incomes:5 'Inkomsten' 'Top 5 grootste inkomsten' %}
+
+		<section class="box stack">
+			<h2>Transactions</h2>
+
+			<table>
+				<tbody>
+					{% for transaction in results.transactions %}
+					<tr>
+						<td>{{ transaction.date }}</td>
+						<td>{{ transaction.other_party.name }}</td>
+						<td>{{ transaction.amount }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</section>
+	</div>
+</div>
 {% endif %}
 {% endblock %}

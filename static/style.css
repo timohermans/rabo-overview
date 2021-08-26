@@ -1,0 +1,181 @@
+/* || Variables */
+:root {
+  --ratio: 1.5;
+  --s-5: calc(var(--s-4) / var(--ratio));
+  --s-4: calc(var(--s-3) / var(--ratio));
+  --s-3: calc(var(--s-2) / var(--ratio));
+  --s-2: calc(var(--s-1) / var(--ratio));
+  --s-1: calc(var(--s04) / var(--ratio));
+  --s0: 1rem;
+  --s1: calc(var(--s0) * var(--ratio));
+  --s2: calc(var(--s1) * var(--ratio));
+  --s3: calc(var(--s2) * var(--ratio));
+  --s4: calc(var(--s3) * var(--ratio));
+  --s5: calc(var(--s4) * var(--ratio));
+
+  --border-thin: --s0;
+
+  --sfc-color-brand-01: #fd6400;
+  --sfc-color-brand-01-lightest: #ffefe5;
+  --sfc-color-brand-01-dark: #ff4800;
+  --sfc-color-brand-02: #009;
+  --sfc-color-brand-02-lighter: #d3edf4;
+  --sfc-color-brand-02-dark: #19197c;
+  --sfc-color-brand-02-darkest: #141240;
+  --sfc-color-accent-01: #42d77a;
+  --sfc-color-success: #36b065;
+  --sfc-color-success-light: #eff9f3;
+  --sfc-color-success-dark: #70ac13;
+  --sfc-color-danger: #e84855;
+  --sfc-color-danger-light: #feebeb;
+  --sfc-color-warning: #f9dc5c;
+  --sfc-color-warning-light: #fffbee;
+  --sfc-color-info: #90d1e2;
+  --sfc-color-info-light: #f7fcfd;
+  --sfc-color-white: #fff;
+  --sfc-color-black: #000;
+  --sfc-color-gray: #666;
+  --sfc-color-gray-light: #aaa;
+  --sfc-color-gray-lighter: #ccc;
+  --sfc-color-gray-lightest: #e3e3e3;
+  --sfc-color-gray-darker: #333;
+  --sfc-color-backdrop: rgba(0, 0, 0, 0.6);
+  --sfc-color-accent-02: #f6ff01;
+  --sfc-color-accent-01-light: #4e9;
+  --sfc-color-accent-01-dark: #38c868;
+  --sfc-color-brand-01-light: #fe8000;
+  --sfc-color-brand-02-light: #427ac9;
+  --sfc-color-focus-ring: #6b8ce8;
+  --sfc-color-focus-ring-transparent: rgba(107, 140, 232, 0.5);
+}
+
+/* || Resets */
+*,
+*::before,
+*::after{box-sizing:border-box;}
+a{text-decoration:none; color:inherit; cursor:pointer;}
+button{background-color:transparent; color:inherit; border-width:0; padding:0; cursor:pointer;}
+figure{margin:0;}
+input::-moz-focus-inner {border:0; padding:0; margin:0;}
+ul, ol, dd{margin:0; padding:0; list-style:none;}
+h1, h2, h3, h4, h5, h6{margin:0; font-size:inherit; font-weight:inherit;}
+p{margin:0;}
+cite {font-style:normal;}
+fieldset{border-width:0; padding:0; margin:0;}
+
+/* || Typography */
+
+html{ 
+	background-color: rgb(246, 246, 246);
+}
+
+body{
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	font-weight: 400;
+	line-height: 1.3;
+	color: var(--sfc-color-black);
+}
+
+/* || General */
+
+ul {
+  padding: 0;
+}
+
+li {
+  list-style-type: none;
+}
+
+space-l {
+  display: block;
+  height: var(--s3);
+}
+
+/* || Layout */
+
+/* The center */
+.center,
+.center-l {
+	--width: 60ch;
+  box-sizing: content-box;
+  max-width: 60ch;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--s1);
+  padding-right: var(--s1);
+}
+
+.center-l {
+  max-width: var(--width);
+}
+
+/* The stack */
+body, .stack {
+  --space: var(--s1);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.stack > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.stack > * + *,
+body > * + * {
+  margin-top: var(--space);
+}
+
+/* The cluster */
+.cluster,
+cluster-l {
+  --align: center;
+  --justify: flex-start;
+  --space: var(--s0);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, 1rem);
+  justify-content: var(--justify);
+  align-items: var(--align);
+}
+
+/* The grid */
+.grid {
+  display: grid;
+  grid-gap: 1rem;
+  --minimum: 20ch;
+}
+
+@supports (width: min(var(--minimum), 100%)) {
+  .grid {
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(var(--minimum), 100%), 1fr)
+    );
+  }
+}
+
+/* The box */
+.box {
+  --color-light: var(--sfc-color-white);
+  --color-dark: var(--sfc-color-black);
+  padding: var(--s1);
+  border: var(--border-thin) solid;
+  outline: var(--border-thin) transparant;
+  outline-offset: calc(var(--border-thin) * -1);
+  color: var(--color-dark);
+  background-color: var(--color-light);
+}
+
+.box * {
+  color: inherit;
+}
+
+.box.invert {
+  color: var(--color-light);
+  background-color: var(--color-dark);
+}
