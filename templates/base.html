@@ -1,4 +1,6 @@
 {% load static %}
+{% load django_vite %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,7 +10,19 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <title>{% block title %}Homebudget{% endblock %}</title>
-    <script src="{% static 'js/layout.js' %}"></script>
+
+
+    <script type="module">
+        import RefreshRuntime from 'http://localhost:3000/static/@react-refresh' // TODO: Fix this with settings url
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+        window.__vite_plugin_react_preamble_installed__ = true
+    </script>
+
+    {% vite_hmr_client %}
+    {% vite_asset 'js/main.js' %} <!-- TODO: remove -->
+    {%  {% endcomment %}block head %}{% endblock %}
 </head>
 
 <body>

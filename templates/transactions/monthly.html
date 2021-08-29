@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% load django_vite %}
+
+{% block head %}
+
+{% vite_asset "apps/monthly/main.tsx" %}
+
+{% endblock %}
+
+
+{% block content %}
+
+<div id="root"></div>
+
+{% endblock %}

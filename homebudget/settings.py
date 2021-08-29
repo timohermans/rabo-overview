@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
-    'transactions.apps.TransactionsConfig'
+    'transactions.apps.TransactionsConfig',
+    'django_vite'
 ]
 
 MIDDLEWARE = [
@@ -121,12 +122,18 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Vite integration
+DJANGO_VITE_ASSETS_PATH = BASE_DIR / "static" / "dist"
+DJANGO_VITE_DEV_MODE = DEBUG
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static"
+    BASE_DIR / "static",
+    BASE_DIR / "frontend" / "src", # TODO: only for debug
+    DJANGO_VITE_ASSETS_PATH
 ]
 
 # Default primary key field type

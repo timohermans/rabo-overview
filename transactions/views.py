@@ -78,7 +78,8 @@ class UploadTransactionsFormView(LoginRequiredMixin, FormView):
 
 class UploadAnonymousTransactionsFormView(FormView):
     # TODO: Actually test the implementation
-    template_name = "transactions/anonymous_upload.html"
+    # template_name = "transactions/anonymous_upload.html"
+    template_name = "transactions/monthly.html"
     form_class = TransactionFileForm
     success_url = "/"
 
