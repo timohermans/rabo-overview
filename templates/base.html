@@ -21,8 +21,9 @@
     </script>
 
     {% vite_hmr_client %}
-    {% vite_asset 'js/main.js' %} <!-- TODO: remove -->
-    {%  {% endcomment %}block head %}{% endblock %}
+    {% vite_asset 'js/main.js' %}
+    <!-- TODO: remove -->
+    {% block head %}{% endblock %}
 </head>
 
 <body>
