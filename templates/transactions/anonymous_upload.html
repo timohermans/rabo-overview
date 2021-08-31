@@ -20,7 +20,7 @@
 	<div class="stack">
 		{% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
 
-		{% transactions_box transactions=results.transactions|top_incomes:5 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
+		{% transactions_box transactions=results.transactions|top_incomes:3 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
 
 		<section class="box stack">
 			<h2>Transactions</h2>
