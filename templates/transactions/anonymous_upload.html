@@ -4,21 +4,23 @@
 
 {% block content %}
 {% if form %}
-<form method="post" enctype="multipart/form-data">
-	{% csrf_token %}
-	{{ form }}
-	<div>
-		<input type="submit" value="Upload" />
-	</div>
-</form>
+<div class="center">
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		{{ form }}
+		<div>
+			<input type="submit" value="Upload" />
+		</div>
+	</form>
+</div>
 {% endif %}
 
 {% if results %}
 <div class="center">
 	<div class="stack">
-		{% show_transactions_box results.transactions|top_expenses:5 'Uitgaven' 'Top 5 grootste uitgaven' %}
+		{% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
 
-		{% show_transactions_box results.transactions|top_incomes:5 'Inkomsten' 'Top 5 grootste inkomsten' %}
+		{% transactions_box transactions=results.transactions|top_incomes:5 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
 
 		<section class="box stack">
 			<h2>Transactions</h2>

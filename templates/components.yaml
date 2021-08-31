@@ -1,2 +1,4 @@
 components:
   center: "components/center.html"
+  transactions_box: "transactions/components/transactions_box.html"
+  
