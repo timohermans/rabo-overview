@@ -4,9 +4,9 @@ from random import randint
 from typing import List
 
 import pytest
-from transactions.models import Transaction
-from transactions.templatetags.statistics import top_expenses, top_incomes
-from transactions.tests.factories import (OtherPartyFactory, ReceiverFactory,
+from apps.transactions.models import Transaction
+from apps.transactions.templatetags.statistics import top_expenses, top_incomes
+from apps.transactions.tests.factories import (OtherPartyFactory, ReceiverFactory,
                                           TransactionFactory, UserFactory)
 
 

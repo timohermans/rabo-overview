@@ -16,14 +16,14 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from transactions import views
+from apps.transactions import views
 import debug_toolbar
 
 urlpatterns = [
     path("", views.UploadAnonymousTransactionsFormView.as_view(), name="home"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
-    path("transactions/", include("transactions.urls", namespace="transactions")),
+    path("transactions/", include("apps.transactions.urls", namespace="transactions")),
 ]
 
 if settings.DEBUG:

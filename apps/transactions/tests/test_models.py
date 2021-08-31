@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Optional
 
 import pytest
 from django.contrib.auth import get_user_model
-from transactions.models import Account, Transaction
-from transactions.tests.factories import UserFactory
-from transactions.tests.utils import open_test_file
-from transactions.utils.fileparser import FileParser, ModelStorageHandler
+from apps.transactions.models import Account, Transaction
+from apps.transactions.tests.factories import UserFactory
+from apps.transactions.tests.utils import open_test_file
+from apps.transactions.utils.fileparser import FileParser, ModelStorageHandler
 
 if TYPE_CHECKING:
-    from accounts.models import User
+    from apps.accounts.models import User
 else:
     User = get_user_model()
 

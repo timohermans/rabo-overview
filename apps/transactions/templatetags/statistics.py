@@ -1,4 +1,4 @@
-from transactions.models import Transaction
+from apps.transactions.models import Transaction
 from django import template
 from typing import List
 

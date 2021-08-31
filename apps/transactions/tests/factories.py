@@ -3,7 +3,7 @@ from random import randint
 import factory.django
 from django.contrib.auth import get_user_model
 
-from transactions.models import Account, Transaction
+from apps.transactions.models import Account, Transaction
 
 
 class UserFactory(factory.django.DjangoModelFactory):

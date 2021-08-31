@@ -1,8 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
-from transactions.tests.utils import open_test_file
-from transactions.utils.fileparser import AnonymousStorageHandler, FileParser
+from apps.transactions.tests.utils import open_test_file
+from apps.transactions.utils.fileparser import AnonymousStorageHandler, FileParser
 
 
 def test_creates_transaction_from_file() -> None:

@@ -1,5 +1,5 @@
 from datetime import date
-from transactions.templatetags import filters
+from apps.transactions.templatetags import filters
 
 
 def test_gets_previous_month() -> None:

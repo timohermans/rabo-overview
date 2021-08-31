@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.generic import ListView
 from django.views.generic.edit import FormView
 
-from transactions.utils.fileparser import (AnonymousStorageHandler, FileParser,
+from apps.transactions.utils.fileparser import (AnonymousStorageHandler, FileParser,
                                            ModelStorageHandler)
 
 from .forms import TransactionFileForm
@@ -20,7 +20,7 @@ from .models import Transaction
 from .utils.date import get_start_end_date_from
 
 if TYPE_CHECKING:
-    from accounts.models import User
+    from apps.accounts.models import User
 else:
     User = get_user_model()
 

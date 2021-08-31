@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from transactions.managers import StatisticsManager
+from apps.transactions.managers import StatisticsManager
 
 User = get_user_model()
 

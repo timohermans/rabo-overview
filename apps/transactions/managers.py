@@ -3,16 +3,16 @@ from decimal import Decimal
 from enum import Enum
 from typing import Dict, Any, TYPE_CHECKING
 
-from accounts.models import User as UserType
+from apps.accounts.models import User as UserType
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q, Sum
 from django.db.models.query import QuerySet
 
-from transactions.utils.date import get_start_end_date_from
+from apps.transactions.utils.date import get_start_end_date_from
 
 if TYPE_CHECKING:
-    from accounts.models import User as UserType
+    from apps.accounts.models import User as UserType
 else:
     UserType = get_user_model()
 

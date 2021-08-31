@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-from transactions.models import Account, Transaction
+from apps.transactions.models import Account, Transaction
 from typing import Any, Dict, List, Protocol, Optional, TYPE_CHECKING, TextIO
 
 from django.contrib.auth import get_user_model
@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from .file import read_raw_transaction_data_from
 
 if TYPE_CHECKING:
-    from accounts.models import User as UserType
+    from apps.accounts.models import User as UserType
 else:
     UserType = get_user_model()
 
