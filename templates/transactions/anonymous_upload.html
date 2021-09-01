@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load filters %}
 {% load statistics %}
 
 {% block content %}
@@ -15,8 +16,20 @@
 {% endif %}
 
 {% if results %}
+
 <div class="center">
 	<div class="stack">
+		<section class="box cluster">
+			<div>
+				Selected account
+			</div>
+			<div class="stack">
+				{% for account in results.accounts|filter_receivers %}
+				<div class="stack"><span>{{ account.name }}</span> <span>{{ account.account_number }}</span></div>
+				{% endfor %}
+			</div>
+		</section>
+
 		{% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
 
 		{% transactions_box transactions=results.transactions|top_incomes:3 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
