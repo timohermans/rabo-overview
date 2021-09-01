@@ -25,17 +25,29 @@ class CreationReport:
         self.amount_success = 0
         self.amount_duplicate = 0
         self.amount_failed = 0
-        self.transactions: List[Transaction] = [] 
+        self.transactions: List[Transaction] = []
         self.accounts: List[Account] = []
 
 
 class StorageHandler(Protocol):
-    def does_transaction_already_exist(self, transaction_code: str) -> bool: ...
-    def get_account_by(self, account_number: str) -> Optional[Account]: ...
-    def update_receiver(self, receiver: Account) -> Account: ...
-    def create_account(self, **kwargs: Any) -> Account: ...
-    def create_transaction(self, **kwargs: Any) -> Transaction: ...
-        
+    def does_transaction_already_exist(self, transaction_code: str) -> bool:
+        ...
+
+    def get_receiver_by(self, account_number: str) -> Optional[Account]:
+        ...
+
+    def get_other_party_by(self, account_number: str, name: str) -> Optional[Account]:
+        ...
+
+    def update_receiver(self, receiver: Account) -> Account:
+        ...
+
+    def create_account(self, account: Account) -> Account:
+        ...
+
+    def create_transaction(self, **kwargs: Any) -> Transaction:
+        ...
+
 
 class AnonymousStorageHandler:
     def __init__(self) -> None:
@@ -45,21 +57,27 @@ class AnonymousStorageHandler:
         self.transactions: List[Transaction] = []
 
     def does_transaction_already_exist(self, transaction_code: str) -> bool:
-        return next(
-            filter(lambda t: t.code == transaction_code, self.transactions), None
-        ) != None
+        return len([t for t in self.transactions if t.code == transaction_code]) != 0
 
-    def get_account_by(self, account_number: str) -> Optional[Account]:
-        return next(
-            filter(lambda a: a is not None and a.account_number == account_number, self.accounts), None
-        )
+    def get_receiver_by(self, account_number: str) -> Optional[Account]:
+        receiver = [a for a in self.accounts if a.account_number == account_number]
+        return receiver[0] if len(receiver) != 0 else None
+
+    def get_other_party_by(self, account_number: str, name: str) -> Optional[Account]:
+        if account_number == "":
+            other_party = [a for a in self.accounts if a.name == name]
+        else:
+            other_party = [
+                a for a in self.accounts if a.account_number == account_number
+            ]
+
+        return other_party[0] if len(other_party) != 0 else None
 
     def update_receiver(self, receiver: Account) -> Account:
         receiver.is_user_owner = True
         return receiver
 
-    def create_account(self, **kwargs: dict[str, Any]) -> Account:
-        account = self.account(**kwargs)
+    def create_account(self, account: Account) -> Account:
         self.accounts.append(account)
         return account
 
@@ -81,11 +99,16 @@ class ModelStorageHandler:
             > 0
         )
 
-    def get_account_by(self, account_number: str) -> Optional[Account]:
-        account = self.account.objects.filter(
+    def get_receiver_by(self, account_number: str) -> Optional[Account]:
+        return Account.objects.filter(
             account_number=account_number, user=self.user
-        )
-        return account[0] if account else None
+        ).first()
+
+    def get_other_party_by(self, account_number: str, name: str) -> Optional[Account]:
+        if account_number == "":
+            return Account.objects.filter(name=name).first()
+        else:
+            return Account.objects.filter(account_number=account_number).first()
 
     def update_receiver(self, receiver: Account) -> Account:
         if not receiver.is_user_owner:
@@ -93,8 +116,8 @@ class ModelStorageHandler:
             receiver.save()
         return receiver
 
-    def create_account(self, **kwargs: dict[str, Any]) -> Account:
-        account = self.account(**kwargs, user=self.user)
+    def create_account(self, account: Account) -> Account:
+        account.user = self.user
         account.save()
         return account
 
@@ -131,32 +154,32 @@ class FileParser:
         return raw_map["IBAN/BBAN"] + raw_map["Volgnr"]
 
     def __get_or_create_receiver(self, raw_map: Dict[str, str]) -> Account:
-        receiver_kwargs: dict[str, Any] = {
-            "name": "Own account",
-            "account_number": raw_map["IBAN/BBAN"],
-            "is_user_owner": True,
-        }
-        receiver = self.storage.get_account_by(receiver_kwargs["account_number"])
+        new_account = Account(
+            name="Own account", account_number=raw_map["IBAN/BBAN"], is_user_owner=True
+        )
+        receiver = self.storage.get_receiver_by(new_account.account_number)
         return (
             self.storage.update_receiver(receiver)
             if receiver
-            else self.storage.create_account(**receiver_kwargs)
+            else self.storage.create_account(new_account)
         )
 
     def __get_or_create_other_party(self, raw_map: Dict[str, str]) -> Account:
-        other_party_kwargs: dict[str, Any] = {
-            "name": raw_map["Naam tegenpartij"],
-            "account_number": raw_map["Tegenrekening IBAN/BBAN"],
-            "is_user_owner": False,
-        }
-        other_party = self.storage.get_account_by(other_party_kwargs["account_number"])
+        new_other_party = Account(
+            name=raw_map["Naam tegenpartij"],
+            account_number=raw_map["Tegenrekening IBAN/BBAN"],
+            is_user_owner=False,
+        )
+        other_party = self.storage.get_other_party_by(
+            new_other_party.account_number, new_other_party.name
+        )
         return (
-            other_party
-            if other_party
-            else self.storage.create_account(**other_party_kwargs)
+            other_party if other_party else self.storage.create_account(new_other_party)
         )
 
-    def __create_transaction(self, raw_map: Dict[str, str], receiver: Account, other_party: Account) -> Transaction:
+    def __create_transaction(
+        self, raw_map: Dict[str, str], receiver: Account, other_party: Account
+    ) -> Transaction:
         transaction = self.storage.create_transaction(
             date=date.fromisoformat(raw_map["Datum"]),
             code=self.__map_raw_data_to_transaction_code(raw_map),
