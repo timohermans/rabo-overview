@@ -8,22 +8,24 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <title>{% block title %}Homebudget{% endblock %}</title>
+
+    <script defer src="https://unpkg.com/alpinejs@3.2.4/dist/cdn.min.js"></script>
     <script src="{% static 'js/layout.js' %}"></script>
 </head>
 
 <body>
     {% #center %}
-        <space-l></space-l>
-        <nav class="cluster" style="--justify: space-between;">
-            <div class="cluster" style="--space: var(--s3);">
-                <div>Maandoverzicht</div>
-                <ul class="cluster">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="{% url 'transactions:upload' %}">New transactions</a></li>
-                </ul>
-            </div>
-            <div>Not sure</div>
-        </nav>
+    <space-l></space-l>
+    <nav class="cluster" style="--justify: space-between;">
+        <div class="cluster" style="--space: var(--s3);">
+            <div>Maandoverzicht</div>
+            <ul class="cluster">
+                <li><a href="/">Home</a></li>
+                <li><a href="{% url 'transactions:upload' %}">New transactions</a></li>
+            </ul>
+        </div>
+        <div>Not sure</div>
+    </nav>
     {% /center %}
 
     <section id="content">

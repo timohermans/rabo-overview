@@ -19,15 +19,20 @@
 
 <div class="center">
 	<div class="stack">
-		<section class="box cluster">
-			<div>
-				Selected account
-			</div>
-			<div class="stack">
-				{% for account in results.accounts|filter_receivers %}
-				<div class="stack"><span>{{ account.name }}</span> <span>{{ account.account_number }}</span></div>
+		<section class="box stack">
+			<div class="cluster" style="--justify:space-between;">
+				{% for account in results.accounts|receivers %}
+				<span>{{ account.account_number|short_account_number }}</span>
 				{% endfor %}
 			</div>
+			{% for receiver in results.accounts|receivers %}
+			<div class="stack">
+				<div>Selected receiver: {{ receiver.name }}</div>
+				{% for transaction in results.transactions|of_receiver:receiver%}
+				<div>{{ transaction.other_party.name }} - {{ transaction.amount }}</div>
+				{% endfor %}
+			</div>
+			{% endfor %}
 		</section>
 
 		{% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
