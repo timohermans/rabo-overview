@@ -1,0 +1,5 @@
+[MASTER]
+load-plugins=pylint_django
+disable=
+	C0114, # missing-module-docstring
+django-settings-module=homebudget.settings
