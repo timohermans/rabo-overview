@@ -1,6 +1,6 @@
 from datetime import date
 from io import TextIOWrapper
-from typing import Dict, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
@@ -8,12 +8,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.query import QuerySet
 from django.http.response import HttpResponse
 from django.shortcuts import render
-from django.urls import reverse
 from django.views.generic import ListView
 from django.views.generic.edit import FormView
 
-from apps.transactions.utils.fileparser import (AnonymousStorageHandler, FileParser,
-                                           ModelStorageHandler)
+from apps.transactions.utils.fileparser import (
+    AnonymousStorageHandler,
+    FileParser,
+    ModelStorageHandler,
+)
 
 from .forms import TransactionFileForm
 from .models import Transaction

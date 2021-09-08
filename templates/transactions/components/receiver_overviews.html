@@ -1,0 +1,30 @@
+{% load filters %}
+
+{% if receivers %}
+<section class="box" x-data="{ receiver: '{{ receivers|first|get:'account_number' }}'}">
+	<stack-l>
+		<cluster-l justify="space-between">
+			{% for account in receivers %}
+			<span x-on:click="receiver = '{{ account.account_number }}'">
+				{{ account.account_number|short_account_number }}
+			</span>
+			{% endfor %}
+		</cluster-l>
+
+		{% for receiver in receivers %}
+		<stack-l space="var(--s3)" x-show="receiver === '{{ receiver.account_number }}'">
+			<stack-l space="var(--s0)">
+				<span>Selected receiver:</span>
+				<span>{{ receiver.name }}</span>
+				<span>{{ receiver.account_number }}</span>
+			</stack-l>
+			<stack-l>
+				{% for transaction in transactions|of_receiver:receiver%}
+				<div>{{ transaction.other_party.name }} - {{ transaction.amount }}</div>
+				{% endfor %}
+			</stack-l>
+		</stack-l>
+		{% endfor %}
+	</stack-l>
+</section>
+{% endif %}

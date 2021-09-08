@@ -11,20 +11,23 @@
 
     <script defer src="https://unpkg.com/alpinejs@3.2.4/dist/cdn.min.js"></script>
     <script src="{% static 'js/layout.js' %}"></script>
+
 </head>
 
 <body>
     {% #center %}
     <space-l></space-l>
-    <nav class="cluster" style="--justify: space-between;">
-        <div class="cluster" style="--space: var(--s3);">
-            <div>Maandoverzicht</div>
-            <ul class="cluster">
-                <li><a href="/">Home</a></li>
-                <li><a href="{% url 'transactions:upload' %}">New transactions</a></li>
-            </ul>
-        </div>
-        <div>Not sure</div>
+    <nav>
+        <cluster-l justify="space-between">
+            <cluster-l space="var(--s3)">
+                <div>Maandoverzicht</div>
+                <cluster-l role="list">
+                    <div role="listitem"><a href="/">Home</a></div>
+                    <div role="listitem"><a href="{% url 'transactions:upload' %}">New transactions</a></div>
+                </cluster-l>
+            </cluster-l>
+            <div>Not sure</div>
+        </cluster-l>
     </nav>
     {% /center %}
 
@@ -32,6 +35,7 @@
         {% block content %}{% endblock %}
     </section>
 
+    {% block script %}{%endblock%}
 </body>
 
 </html>

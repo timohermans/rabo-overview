@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Iterator, List
+from typing import Any, Iterator, List
 
 from dateutil.relativedelta import relativedelta
 from django import template
@@ -28,9 +28,9 @@ def to_date_string(source: date) -> str:
 
 
 @register.filter
-def receivers(accounts: List[Account]) -> Iterator[Account]:
+def receivers(accounts: List[Account]) -> List[Account]:
     """pulls out receivers from all accounts"""
-    return (a for a in accounts if a.is_user_owner is True)
+    return [a for a in accounts if a.is_user_owner is True]
 
 
 @register.filter
@@ -45,3 +45,8 @@ def of_receiver(
 ) -> Iterator[Transaction]:
     """returns transactions of a user owned account"""
     return (t for t in transactions if t.receiver == receiver)
+
+@register.filter
+def get(o: object, key: str) -> Any:
+    """I want property access in templates!"""
+    return getattr(o, key)

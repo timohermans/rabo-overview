@@ -1,60 +1,172 @@
 {% extends "base.html" %}
 {% load filters %}
 {% load statistics %}
+{% load components %}
+
+{% block script %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/d3-array@1"></script>
+<script src="https://unpkg.com/d3-collection@1"></script>
+<script src="https://unpkg.com/d3-path@1"></script>
+<script src="https://unpkg.com/d3-shape@1"></script>
+<script src="https://unpkg.com/d3-sankey@0"></script>
+
+{% if results %}
+{{ results.transactions|summary|get:'flow_graph'|json_script:"graph-data" }}
+{% endif %}
+<script>
+  function loadGraph() {
+    const width = 300;
+    const height = 1000;
+
+    const d3Color = d3.scaleOrdinal(d3.schemeCategory10);
+    const color = (d => d3Color(d));
+
+    const dataElement = document.getElementById("graph-data");
+    if (!dataElement) return;
+    const data = JSON.parse(dataElement.textContent);
+
+    data.links = data.links.filter(link => link.source !== "Betaalverzoek Rabobank (NL13RABO0181015595)")
+
+    const createSankeyGraph = d3.sankey()
+      .nodeId(d => d.name)
+      .nodeWidth(15)
+      .nodePadding(10)
+      .linkSort((d1, d2) => +d2.value - +d1.value)
+      .extent([
+        [1, 5],
+        [width - 1, height - 5]
+      ]);
+
+    const {
+      nodes,
+      links
+    } = createSankeyGraph(data);
+
+    let uidCount = -1;
+    const createUidFor = (id) => {
+      uidCount++;
+      return `0-${id}-${uidCount}`;
+    };
+
+    const svg = d3.create("svg")
+      .attr("viewBox", [0, 0, width, height]);
+
+    svg.append("g")
+      .selectAll("rect")
+      .data(nodes)
+      .join("rect")
+      .attr("x", d => d.x0 + 1)
+      .attr("y", d => d.y0)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("width", d => d.x1 - d.x0 - 2)
+      .attr("fill", d => {
+        return d3Color(d.name);
+      })
+      .append("title")
+      .text(d => `${d.name}\n${d.value.toLocaleString()}`);
+
+    const link = svg.append("g")
+      .attr("fill", "none")
+      .selectAll("g")
+      .data(links)
+      .join("g")
+      .attr("stroke", d => d3.color(d3Color(d.target.name)).brighter(2))
+      .style("mix-blend-mode", "multiply");
+
+    link.append("path")
+      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("stroke-width", d => Math.max(1, d.width));
+
+    link.append("title")
+      .text(d => `${d.source.name} → ${d.target.name}\n${d.value.toLocaleString()}`);
+
+    svg.append("g")
+      .style("font", "6px sans-serif")
+      .selectAll("text")
+      .data(nodes)
+      .join("text")
+      .attr("x", d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+      .attr("y", d => (d.y1 + d.y0) / 2)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end")
+      .text(d => d.name)
+      .append("tspan")
+      .attr("fill-opacity", 0.7)
+      .text(d => ` ${d.value.toLocaleString()}`);
+
+    const graphContainer = document.getElementById("money-flow-graph");
+    graphContainer.appendChild(svg.node());
+  }
+
+  loadGraph();
+</script>
+{% endblock %}
 
 {% block content %}
 {% if form %}
 <div class="center">
-	<form method="post" enctype="multipart/form-data">
-		{% csrf_token %}
-		{{ form }}
-		<div>
-			<input type="submit" value="Upload" />
-		</div>
-	</form>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form }}
+    <div>
+      <input type="submit" value="Upload" />
+    </div>
+  </form>
 </div>
 {% endif %}
 
 {% if results %}
 
 <div class="center">
-	<div class="stack">
-		<section class="box stack">
-			<div class="cluster" style="--justify:space-between;">
-				{% for account in results.accounts|receivers %}
-				<span>{{ account.account_number|short_account_number }}</span>
-				{% endfor %}
-			</div>
-			{% for receiver in results.accounts|receivers %}
-			<div class="stack">
-				<div>Selected receiver: {{ receiver.name }}</div>
-				{% for transaction in results.transactions|of_receiver:receiver%}
-				<div>{{ transaction.other_party.name }} - {{ transaction.amount }}</div>
-				{% endfor %}
-			</div>
-			{% endfor %}
-		</section>
+  <stack-l>
+    <section class="box">
+      <stack-l>
+        <stack-l>
+          <h2>Summary</h2>
+          {% with summary=results.transactions|summary %}
+          <p>During the period between {{ summary.date_first }} and {{ summary.date_last }}, you received a total of
+            <span class="success">{{ summary.incomes_from_outside }}</span> moneys. You expended a
+            total of <span class="danger">{{ summary.expenses_to_outside }}</span>. This means that you
+            {% if summary.total_balance > 0 %}
+            have <span class="success">{{ summary.total_balance }}</span> room to spent or save.
+            {% else %}
+            spent <span class="danger">{{ summary.total_balance }}</span> moneys too much.
+            {% endif %}
+          </p>
+          <p>
+            You have a total of {{ summary.amount_of_receivers}} accounts, so let's look at what happened there.
+          </p>
+          <div id="money-flow-graph">
+          </div>
+          {% endwith %}
+        </stack-l>
+      </stack-l>
+    </section>
 
-		{% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
+    {% transactions_box transactions=results.transactions|top_expenses:5 title='Uitgaven' sub_title='Top 5 grootste uitgaven' %}
+    {% transactions_box transactions=results.transactions|top_incomes:3 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
+    {% receiver_overviews receivers=results.accounts|receivers transactions=results.transactions %}
 
-		{% transactions_box transactions=results.transactions|top_incomes:3 title='Inkomsten' sub_title='Top 5 grootste inkomsten' %}
 
-		<section class="box stack">
-			<h2>Transactions</h2>
+    <section class="box">
+      <stack-l>
+        <h2>Transactions</h2>
 
-			<table>
-				<tbody>
-					{% for transaction in results.transactions %}
-					<tr>
-						<td>{{ transaction.date }}</td>
-						<td>{{ transaction.other_party.name }}</td>
-						<td>{{ transaction.amount }}</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</section>
-	</div>
+        <table>
+          <tbody>
+            {% for transaction in results.transactions %}
+            <tr>
+              <td>{{ transaction.date }}</td>
+              <td>{{ transaction.other_party.name }}</td>
+              <td>{{ transaction.amount }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </stack-l>
+    </section>
+  </stack-l>
 </div>
 {% endif %}
 {% endblock %}

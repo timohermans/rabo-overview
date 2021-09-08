@@ -1,4 +1,45 @@
-class Cluster extends HTMLElement {
+class LayoutComponents extends HTMLElement {
+  constructor() {
+    super();
+  }
+
+  getStyleValues() {
+    return Object.entries(
+      Object.getOwnPropertyDescriptors(Object.getPrototypeOf(this))
+    )
+      .filter(([key, descriptor]) => typeof descriptor.get == "function")
+      .map(([key]) => this[key]);
+  }
+
+  generateCss() {
+    throw new Error("Override generateCss() and print the css stylesheet!");
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  attributeChangedCallback() {
+    this.render();
+  }
+
+  render() {
+    this.styleId = `${this.constructor.name}-${this.getStyleValues()}`;
+    this.dataset.styleId = this.styleId;
+
+    if (document.getElementById(this.styleId)) return;
+    const styleElement = document.createElement("style");
+    styleElement.id = this.styleId;
+    const css = this.generateCss();
+    if (css.indexOf(`[data-style-id="${this.styleId}"]`) === -1) {
+        throw new Error("Use [data-style-id=\"${this.styleId}\"] in the generateCss function!");
+    }
+    styleElement.innerHTML = css.replace(/\s\s+/g, " ").trim();
+    document.head.appendChild(styleElement);
+  }
+}
+
+class Cluster extends LayoutComponents {
   constructor() {
     super();
   }
@@ -24,38 +65,27 @@ class Cluster extends HTMLElement {
   get space() {
     return this.getAttribute("space") || "var(--s1)";
   }
-
-  static get observedAttributes() {
-    return ["justify", "align", "space"];
-  }
-
-  connectedCallback() {
-    this.render();
-  }
-
-  attributeChangedCallback() {
-    this.render();
-  }
-
-  render() {
-    this.styleId = `Cluster-${[this.justify, this.align, this.space].join("")}`;
-    this.dataset.styleId = this.styleId;
-
-    if (document.getElementById(this.styleId)) return;
-    const styleEl = document.createElement("style");
-    styleEl.id = this.styleId;
-    styleEl.innerHTML = this.generateCss().replace(/\s\s+/g, " ").trim();
-    document.head.appendChild(styleEl);
-  }
 }
 
-class Center extends HTMLElement {
+class Stack extends LayoutComponents {
   constructor() {
     super();
+  }
+
+  get space() {
+    return this.getAttribute("space") || "var(--s0)";
+  }
+
+  generateCss() {
+    return `[data-style-id="${this.styleId}"] > * + * {
+      margin-top: ${this.space};
+    }
+    `;
   }
 }
 
 if ("customElements" in window) {
   customElements.define("cluster-l", Cluster);
   customElements.define("space-l", class extends HTMLElement {});
+  customElements.define("stack-l", Stack);
 }
