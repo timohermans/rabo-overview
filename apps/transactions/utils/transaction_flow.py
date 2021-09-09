@@ -2,18 +2,38 @@ from decimal import Decimal
 from typing import Any, Dict, List
 
 from apps.transactions.models import Account, Transaction
+from apps.transactions.utils.objects import CommonEqualityMixin
 
 
-class TransactionNode:
+class TransactionNode(CommonEqualityMixin):
     def __init__(self, name: str):
         self.name = name
 
 
-class TransactionLink:
+class TransactionLink(CommonEqualityMixin):
     def __init__(self, source: str, target: str, value: Decimal):
         self.source = source
         self.target = target
         self.value = value
+
+    def has_same_target(self, target: str, source: str) -> bool:
+        """we need to know if we need to flip"""
+        return self.source == source and self.target == target
+
+    def is_opposite_target(self, target: str, source: str) -> bool:
+        """we need to know if we need to flip"""
+        return self.source == target and self.target == source
+
+    def update(self, value: Decimal) -> None:
+        """Not only updates the moneys, but alsof flips source and target when negative moneys.
+        Negative moneys is not supported in a sankey (well, I don't want it :D)"""
+        self.value += value
+
+        if self.value < 0:
+            new_target = self.source
+            self.source = self.target
+            self.target = new_target
+            self.value = Decimal.copy_abs(self.value)
 
 
 class TransactionFlow:
@@ -28,7 +48,7 @@ def create_flow_for(transactions: List[Transaction]) -> Dict[str, List[Dict[str,
     return create_flow_graph_for(nodes, links)
 
 
-def create_nodes_from(transactions: List[Transaction]) -> List[Dict[str, str]]:
+def create_nodes_from(transactions: List[Transaction]) -> List[TransactionNode]:
     """
     Get nodes for the sankey out of the transactions.
 
@@ -61,43 +81,20 @@ def create_nodes_from(transactions: List[Transaction]) -> List[Dict[str, str]]:
         else:
             nodes.add(account_list[0].name)
 
-    return [{"name": n} for n in sorted(nodes)]
+    return [TransactionNode(n) for n in sorted(nodes)]
 
 
 def create_links_from(
-    transactions: List[Transaction], nodes: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    transactions: List[Transaction], nodes: List[TransactionNode]
+) -> List[TransactionLink]:
     """The links between flow_nodes. To see where the moneys go"""
-    links: List[Dict[str, Any]] = []
+    links: List[TransactionLink] = []
     for transaction in transactions:
         if is_internal_expense(transaction):
             continue
 
-        receiver_name = (
-            next(
-                (
-                    node["name"]
-                    for node in nodes
-                    if node["name"]
-                    == f"{transaction.receiver.name} ({transaction.receiver.account_number})"
-                ),
-                None,
-            )
-            or transaction.receiver.name
-        )
-
-        other_party_name = (
-            next(
-                (
-                    node["name"]
-                    for node in nodes
-                    if node["name"]
-                    == f"{transaction.other_party.name} ({transaction.other_party.account_number})"
-                ),
-                None,
-            )
-            or transaction.other_party.name
-        )
+        receiver_name = find_node_name_by(transaction.receiver, nodes)
+        other_party_name = find_node_name_by(transaction.other_party, nodes)
 
         if transaction.amount > 0:
             source = other_party_name
@@ -109,49 +106,31 @@ def create_links_from(
         value = Decimal.copy_abs(transaction.amount)
 
         for link in links:
-            if __is_same_target_source_link(link, target, source):
-                update_link_with(link, value)
+            if link.has_same_target(target, source):
+                link.update(value)
                 break
-            elif __is_opposite_target_source_link(link, target, source):
-                update_link_with(link, value * -1)
+            elif link.is_opposite_target(target, source):
+                link.update(value * -1)
                 break
         else:
-            links.append(
-                {
-                    "source": source,
-                    "target": target,
-                    "value": Decimal.copy_abs(transaction.amount),
-                }
-            )
+            links.append(TransactionLink(source, target, Decimal.copy_abs(transaction.amount)))
 
     return links
 
 
-def __is_same_target_source_link(link: Dict[str, Any], target: str, source: str) -> bool:
-    return link["source"] == source and link["target"] == target
-
-
-def __is_opposite_target_source_link(link: Dict[str, Any], target: str, source: str) -> bool:
-    return link["source"] == target and link["target"] == source
-
-
-def update_link_with(link: Dict[str, Any], value: Decimal) -> None:
-    """Not only updates the moneys, but alsof flips source and target when negative moneys.
-    Negative moneys is not supported in a sankey (well, I don't want it :D)"""
-    link["value"] += value
-
-    if link["value"] < 0:
-        new_target = link["source"]
-        link["source"] = link["target"]
-        link["target"] = new_target
-        link["value"] = Decimal.copy_abs(link["value"])
+def find_node_name_by(account: Account, nodes: List[TransactionNode]) -> str:
+    """Get either the name with account number appended or just the name of the account"""
+    return next(
+        (node.name for node in nodes if node.name == f"{account.name} ({account.account_number})"),
+        account.name,
+    )
 
 
 def create_flow_graph_for(
-    nodes: List[Dict[str, Any]], links: List[Dict[str, Any]]
+    nodes: List[TransactionNode], links: List[TransactionLink]
 ) -> Dict[str, List[Dict[str, Any]]]:
     """The totality to create a sankey diagram"""
-    return {"nodes": nodes, "links": links}
+    return {"nodes": [vars(node) for node in nodes], "links": [vars(link) for link in links]}
 
 
 def is_internal_expense(transaction: Transaction) -> bool:

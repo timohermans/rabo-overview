@@ -6,6 +6,7 @@ from apps.transactions.tests.factories import (
     TransactionFactory,
 )
 from apps.transactions.utils import transaction_flow
+from apps.transactions.utils.transaction_flow import TransactionLink, TransactionNode
 
 
 def test_summary_creates_unique_flow_nodes_from_transactions() -> None:
@@ -22,9 +23,9 @@ def test_summary_creates_unique_flow_nodes_from_transactions() -> None:
     nodes = transaction_flow.create_nodes_from(transactions)
 
     assert nodes == [
-        {"name": "Betaalrekening"},
-        {"name": "Kabisa"},
-        {"name": "Spaarrekening"},
+        TransactionNode("Betaalrekening"),
+        TransactionNode("Kabisa"),
+        TransactionNode("Spaarrekening"),
     ]
 
 
@@ -41,9 +42,9 @@ def test_summary_flow_nodes_when_same_name_different_account_then_two_nodes() ->
     nodes = transaction_flow.create_nodes_from(transactions)
 
     assert nodes == [
-        {"name": "Achternaam eo. (NL11RABO011)"},
-        {"name": "Achternaam eo. (NL11RABO022)"},
-        {"name": "Albert Heijn"},
+        TransactionNode("Achternaam eo. (NL11RABO011)"),
+        TransactionNode("Achternaam eo. (NL11RABO022)"),
+        TransactionNode("Albert Heijn"),
     ]
 
 
@@ -59,10 +60,11 @@ def test_summary_creates_flow_link_from_single_transaction() -> None:
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [{"source": "Betaalrekening", "target": "Hema", "value": Decimal(100)}]
+    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(100))]
 
 
 def test_summary_flow_link_same_source_and_target_sums_values() -> None:
+    """We don't want duplicate links. Just add the values"""
     shopping = OtherPartyFactory.build(name="Hema")
     checkings = ReceiverFactory.build(name="Betaalrekening")
     transactions = [
@@ -75,7 +77,7 @@ def test_summary_flow_link_same_source_and_target_sums_values() -> None:
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [{"source": "Betaalrekening", "target": "Hema", "value": Decimal(275)}]
+    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(275))]
 
 
 def test_summary_flow_link_internal_transaction_should_sum_successful() -> None:
@@ -95,10 +97,11 @@ def test_summary_flow_link_internal_transaction_should_sum_successful() -> None:
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links[0]["value"] == Decimal(100)
+    assert links[0].value == Decimal(100)
 
 
 def test_summary_flow_link_same_source_and_target_flip_source_and_target_when_negative_numbers() -> None:
+    """When adding values, the source and target need to flip so that value is always positive"""
     shopping = OtherPartyFactory.build(name="Hema")
     checkings = ReceiverFactory.build(name="Betaalrekening")
     transactions = [
@@ -110,7 +113,7 @@ def test_summary_flow_link_same_source_and_target_flip_source_and_target_when_ne
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [{"source": "Hema", "target": "Betaalrekening", "value": Decimal(150)}]
+    assert links == [TransactionLink("Hema", "Betaalrekening", Decimal(150))]
 
 
 def test_summary_creates_flow_links_multiple() -> None:
@@ -131,13 +134,9 @@ def test_summary_creates_flow_links_multiple() -> None:
     )
 
     assert links == [
-        {"source": "Eigen rekening (NL11RABO1)", "target": "Hema", "value": Decimal(200)},
-        {
-            "source": "Eigen rekening (NL11RABO1)",
-            "target": "Eigen rekening (NL11RABO2)",
-            "value": Decimal(600),
-        },
-        {"source": "Eigen rekening (NL11RABO2)", "target": "Hema", "value": Decimal(300)},
+        TransactionLink("Eigen rekening (NL11RABO1)", "Hema", Decimal(200)),
+        TransactionLink("Eigen rekening (NL11RABO1)", "Eigen rekening (NL11RABO2)", Decimal(600)),
+        TransactionLink("Eigen rekening (NL11RABO2)", "Hema", Decimal(300)),
     ]
 
 
