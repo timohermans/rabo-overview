@@ -1,0 +1,21 @@
+<section class="box">
+    <stack-l>
+        <stack-l>
+            <h2>Summary</h2>
+            <p>During the period between {{ summary.date_first }} and {{ summary.date_last }}, you received a total of
+                <span class="success">{{ summary.incomes_from_outside }}</span> moneys. You expended a
+                total of <span class="danger">{{ summary.expenses_to_outside }}</span>. This means that you
+                {% if summary.total_balance > 0 %}
+                have <span class="success">{{ summary.total_balance }}</span> room to spent or save.
+                {% else %}
+                spent <span class="danger">{{ summary.total_balance }}</span> moneys too much.
+                {% endif %}
+            </p>
+            <p>
+                You have a total of {{ summary.amount_of_receivers}} accounts, so let's look at what happened there.
+            </p>
+            <div id="money-flow-graph">
+            </div>
+        </stack-l>
+    </stack-l>
+</section>
