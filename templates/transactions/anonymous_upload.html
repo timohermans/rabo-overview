@@ -15,6 +15,8 @@
 {{ results.transactions|summary|get:'flow_graph'|json_script:"graph-data" }}
 {% endif %}
 <script>
+  // TODO: refactor this into seperate file and get the graph div out of the summary_text
+  // inclusion tag
   function loadGraph() {
     const width = 300;
     const height = 1000;
