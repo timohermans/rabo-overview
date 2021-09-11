@@ -1,7 +1,10 @@
 from decimal import Decimal
 from typing import Any, Dict, List
 
+from networkx import DiGraph, simple_cycles
+
 from apps.transactions.models import Account, Transaction
+from apps.transactions.utils.graph import Graph
 from apps.transactions.utils.objects import CommonEqualityMixin
 
 
@@ -125,11 +128,65 @@ def find_node_name_by(account: Account, nodes: List[TransactionNode]) -> str:
         account.name,
     )
 
+def remove_circular_links_from(links: List[TransactionLink], transactions: List[Transaction]) -> List[Transaction]:
+    dg = DiGraph()
+
+    for link in links:
+        dg.add_edge(link.source, link.target)
+
+    sc = simple_cycles(dg)
+
+    # TODO: So yeah, just loop through the simple cycles and remove the target:other_party transactions
+
+    for cycle in sc:
+        links_for_cycle = [l for l in links if l.source in cycle and l.target in cycle]
+        ng = networkx.DiGraph()
+
+        if len(links_for_cycle) <= 1:
+            continue
+
+        for link in links_for_cycle:
+            ng.add_edge(link.source, link.target)
+
+        is_strongy_connected = networkx.is_strongly_connected(ng)
+
+        print(is_strongy_connected)
+        # Yay, GGs :)
+
+    pass
 
 def create_flow_graph_for(
     nodes: List[TransactionNode], links: List[TransactionLink]
 ) -> Dict[str, List[Dict[str, Any]]]:
     """The totality to create a sankey diagram"""
+
+    import networkx
+
+    dg = networkx.DiGraph()
+
+    for link in links:
+        dg.add_edge(link.source, link.target)
+
+    sc = networkx.simple_cycles(dg)
+
+    # TODO: So yeah, just loop through the simple cycles and remove the target:other_party transactions
+
+    for cycle in sc:
+        links_for_cycle = [l for l in links if l.source in cycle and l.target in cycle]
+        ng = networkx.DiGraph()
+
+        if len(links_for_cycle) <= 1:
+            continue
+
+        for link in links_for_cycle:
+            ng.add_edge(link.source, link.target)
+
+        is_strongy_connected = networkx.is_strongly_connected(ng)
+
+        print(is_strongy_connected)
+        # Yay, GGs :)
+
+
     return {"nodes": [vars(node) for node in nodes], "links": [vars(link) for link in links]}
 
 
