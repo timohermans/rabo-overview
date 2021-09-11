@@ -26,8 +26,6 @@
     if (!dataElement) return;
     const data = JSON.parse(dataElement.textContent);
 
-    data.links = data.links.filter(link => link.source !== "Betaalverzoek Rabobank (NL13RABO0181015595)")
-
     const createSankeyGraph = d3.sankey()
       .nodeId(d => d.name)
       .nodeWidth(15)

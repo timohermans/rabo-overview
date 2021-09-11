@@ -30,6 +30,7 @@ def test_summary_creates_unique_flow_nodes_from_transactions() -> None:
 
 
 def test_summary_flow_nodes_when_same_name_different_account_then_two_nodes() -> None:
+    """Only for the duplicate accounts, I need to see a distiction"""
     checkings = ReceiverFactory.build(name="Achternaam eo.", account_number="NL11RABO011")
     savings = ReceiverFactory.build(name="Achternaam eo.", account_number="NL11RABO022")
     shopping = ReceiverFactory.build(name="Albert Heijn", account_number="NL20INGB011")
@@ -100,7 +101,7 @@ def test_summary_flow_link_internal_transaction_should_sum_successful() -> None:
     assert links[0].value == Decimal(100)
 
 
-def test_summary_flow_link_same_source_and_target_flip_source_and_target_when_negative_numbers() -> None:
+def test_summary_flow_link_same_source_target_flip_source_target_when_negative_numbers() -> None:
     """When adding values, the source and target need to flip so that value is always positive"""
     shopping = OtherPartyFactory.build(name="Hema")
     checkings = ReceiverFactory.build(name="Betaalrekening")
