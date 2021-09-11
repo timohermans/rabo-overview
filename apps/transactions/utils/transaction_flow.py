@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 from networkx import DiGraph, simple_cycles
 
 from apps.transactions.models import Account, Transaction
-from apps.transactions.utils.graph import Graph
 from apps.transactions.utils.objects import CommonEqualityMixin
 
 
@@ -14,10 +13,11 @@ class TransactionNode(CommonEqualityMixin):
 
 
 class TransactionLink(CommonEqualityMixin):
-    def __init__(self, source: str, target: str, value: Decimal):
+    def __init__(self, source: str, target: str, value: Decimal, is_target_external: bool):
         self.source = source
         self.target = target
         self.value = value
+        self.is_target_external = is_target_external
 
     def has_same_target(self, target: str, source: str) -> bool:
         """we need to know if we need to flip"""
@@ -37,6 +37,7 @@ class TransactionLink(CommonEqualityMixin):
             self.source = self.target
             self.target = new_target
             self.value = Decimal.copy_abs(self.value)
+            self.is_target_external = not self.is_target_external
 
 
 class TransactionFlow:
@@ -48,6 +49,8 @@ class TransactionFlow:
 def create_flow_for(transactions: List[Transaction]) -> Dict[str, List[Dict[str, Any]]]:
     nodes = create_nodes_from(transactions)
     links = create_links_from(transactions, nodes)
+    links_to_skip = get_links_that_cause_loops(links)
+    links = [l for l in links if l not in links_to_skip]
     return create_flow_graph_for(nodes, links)
 
 
@@ -98,6 +101,7 @@ def create_links_from(
 
         receiver_name = find_node_name_by(transaction.receiver, nodes)
         other_party_name = find_node_name_by(transaction.other_party, nodes)
+        is_target_external = False
 
         if transaction.amount > 0:
             source = other_party_name
@@ -105,6 +109,7 @@ def create_links_from(
         else:
             source = receiver_name
             target = other_party_name
+            is_target_external = True
 
         value = Decimal.copy_abs(transaction.amount)
 
@@ -116,7 +121,11 @@ def create_links_from(
                 link.update(value * -1)
                 break
         else:
-            links.append(TransactionLink(source, target, Decimal.copy_abs(transaction.amount)))
+            links.append(
+                TransactionLink(
+                    source, target, Decimal.copy_abs(transaction.amount), is_target_external
+                )
+            )
 
     return links
 
@@ -128,65 +137,32 @@ def find_node_name_by(account: Account, nodes: List[TransactionNode]) -> str:
         account.name,
     )
 
-def remove_circular_links_from(links: List[TransactionLink], transactions: List[Transaction]) -> List[Transaction]:
+
+def get_links_that_cause_loops(links: List[TransactionLink]) -> List[TransactionLink]:
     dg = DiGraph()
 
     for link in links:
         dg.add_edge(link.source, link.target)
 
-    sc = simple_cycles(dg)
+    cycles_in_a_loop = simple_cycles(dg)
 
-    # TODO: So yeah, just loop through the simple cycles and remove the target:other_party transactions
+    loop_links = []
 
-    for cycle in sc:
-        links_for_cycle = [l for l in links if l.source in cycle and l.target in cycle]
-        ng = networkx.DiGraph()
-
-        if len(links_for_cycle) <= 1:
-            continue
+    for cycle in cycles_in_a_loop:
+        links_for_cycle = [
+            l for l in links if l.source in cycle and l.target in cycle and l.is_target_external
+        ]
 
         for link in links_for_cycle:
-            ng.add_edge(link.source, link.target)
+            loop_links.append(link)
 
-        is_strongy_connected = networkx.is_strongly_connected(ng)
+    return loop_links
 
-        print(is_strongy_connected)
-        # Yay, GGs :)
-
-    pass
 
 def create_flow_graph_for(
     nodes: List[TransactionNode], links: List[TransactionLink]
 ) -> Dict[str, List[Dict[str, Any]]]:
     """The totality to create a sankey diagram"""
-
-    import networkx
-
-    dg = networkx.DiGraph()
-
-    for link in links:
-        dg.add_edge(link.source, link.target)
-
-    sc = networkx.simple_cycles(dg)
-
-    # TODO: So yeah, just loop through the simple cycles and remove the target:other_party transactions
-
-    for cycle in sc:
-        links_for_cycle = [l for l in links if l.source in cycle and l.target in cycle]
-        ng = networkx.DiGraph()
-
-        if len(links_for_cycle) <= 1:
-            continue
-
-        for link in links_for_cycle:
-            ng.add_edge(link.source, link.target)
-
-        is_strongy_connected = networkx.is_strongly_connected(ng)
-
-        print(is_strongy_connected)
-        # Yay, GGs :)
-
-
     return {"nodes": [vars(node) for node in nodes], "links": [vars(link) for link in links]}
 
 

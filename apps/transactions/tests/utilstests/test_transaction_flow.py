@@ -60,7 +60,7 @@ def test_summary_creates_flow_link_from_single_transaction() -> None:
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(100))]
+    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(100), True)]
 
 
 def test_summary_flow_link_same_source_and_target_sums_values() -> None:
@@ -77,7 +77,7 @@ def test_summary_flow_link_same_source_and_target_sums_values() -> None:
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(275))]
+    assert links == [TransactionLink("Betaalrekening", "Hema", Decimal(275), True)]
 
 
 def test_summary_flow_link_internal_transaction_should_sum_successful() -> None:
@@ -113,7 +113,7 @@ def test_summary_flow_link_same_source_and_target_flip_source_and_target_when_ne
         transactions, transaction_flow.create_nodes_from(transactions)
     )
 
-    assert links == [TransactionLink("Hema", "Betaalrekening", Decimal(150))]
+    assert links == [TransactionLink("Hema", "Betaalrekening", Decimal(150), False)]
 
 
 def test_summary_creates_flow_links_multiple() -> None:
@@ -134,9 +134,11 @@ def test_summary_creates_flow_links_multiple() -> None:
     )
 
     assert links == [
-        TransactionLink("Eigen rekening (NL11RABO1)", "Hema", Decimal(200)),
-        TransactionLink("Eigen rekening (NL11RABO1)", "Eigen rekening (NL11RABO2)", Decimal(600)),
-        TransactionLink("Eigen rekening (NL11RABO2)", "Hema", Decimal(300)),
+        TransactionLink("Eigen rekening (NL11RABO1)", "Hema", Decimal(200), True),
+        TransactionLink(
+            "Eigen rekening (NL11RABO1)", "Eigen rekening (NL11RABO2)", Decimal(600), False
+        ),
+        TransactionLink("Eigen rekening (NL11RABO2)", "Hema", Decimal(300), True),
     ]
 
 
@@ -156,5 +158,79 @@ def test_summary_create_flow_graph() -> None:
 
     assert graph == {
         "nodes": [{"name": "Betaalrekening"}, {"name": "Hema"}],
-        "links": [{"source": "Hema", "target": "Betaalrekening", "value": Decimal(150)}],
+        "links": [
+            {
+                "source": "Hema",
+                "target": "Betaalrekening",
+                "value": Decimal(150),
+                "is_target_external": False,
+            }
+        ],
+    }
+
+
+def test_summary_cyclic_graph() -> None:
+    """The totality of a flow graph"""
+    checkings = ReceiverFactory.build(name="Own account")
+    personal = ReceiverFactory.build(name="T.M. Hermans")
+    bank = OtherPartyFactory.build(name="Betaalverzoek Rabobank (NL13RABO01)")
+    insurance = OtherPartyFactory.build(name="REAAL")
+    shopping = OtherPartyFactory.build(name="AH")
+    transactions = [
+        TransactionFactory.build(receiver=checkings, other_party=bank, amount=Decimal(8)),
+        TransactionFactory.build(
+            receiver=personal, other_party=shopping, amount=Decimal("-41.20")
+        ),
+        TransactionFactory.build(receiver=personal, other_party=checkings, amount=Decimal(200)),
+        TransactionFactory.build(
+            receiver=checkings, other_party=insurance, amount=Decimal("-4.30")
+        ),
+        TransactionFactory.build(receiver=personal, other_party=bank, amount=Decimal(-8)),
+    ]
+
+    graph = transaction_flow.create_flow_for(transactions)
+
+    assert graph == {
+        "nodes": [
+            {"name": "AH"},
+            {"name": "Betaalverzoek Rabobank (NL13RABO01)"},
+            {"name": "Own account"},
+            {"name": "REAAL"},
+            {"name": "T.M. Hermans"},
+        ],
+        "links": [
+            {
+                "source": "Betaalverzoek Rabobank (NL13RABO01)",
+                "target": "Own account",
+                "value": Decimal(8),
+                "is_target_external": False,
+            },
+            {
+                "source": "T.M. Hermans",
+                "target": "AH",
+                "value": Decimal("41.20"),
+                "is_target_external": True,
+            },
+            {
+                "source": "Own account",
+                "target": "T.M. Hermans",
+                "value": Decimal(200),
+                "is_target_external": False,
+            },
+            {
+                "source": "Own account",
+                "target": "REAAL",
+                "value": Decimal("4.30"),
+                "is_target_external": True,
+            },
+        ],
+        # TODO: Do this eventually to show some transparancy :)
+        # "skipped": [
+        #     {
+        #         "source": "T.M. Hermans",
+        #         "target": "Betaalverzoek Rabobank (NL13RABO01)",
+        #         "value": Decimal(8),
+        #         "is_target_external": True,
+        #     },
+        # ]
     }
