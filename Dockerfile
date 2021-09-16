@@ -22,3 +22,5 @@ RUN poetry config virtualenvs.create false \
 
 # Copy entire project
 COPY . .
+
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
