@@ -9,9 +9,10 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-import environ
-from pathlib import Path
 from os import path
+from pathlib import Path
+
+import environ
 
 env = environ.Env(
     DEBUG=(bool, False)
@@ -32,9 +33,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = [
-    env('ALLOWED_HOST')
-]
+ALLOWED_HOSTS = [host for host in env('ALLOWED_HOSTS').split(" ")]
 
 # Application definition
 

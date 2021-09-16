@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+      context: .
+      args:
+        POETRY_VERSION: 1.1.8
+        DEBUG: ${DEBUG}
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes: 
+      - ./homebudget/:/user/src/app/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=homedjango
+      - POSTGRES_PASSWORD=homedjango
+      - POSTGRES_DB=homedjango_dev
+
+volumes:
+  postgres_data:
