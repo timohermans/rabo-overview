@@ -50,7 +50,7 @@ WORKDIR $PYSETUP_PATH
 RUN poetry install
 
 # Copying in our entrypoint
-COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 WORKDIR /app
@@ -85,7 +85,7 @@ ENV RUN_MIGRATIONS=0
 RUN apk update && apk add libpq
 COPY --from=builder-base $POETRY_VIRTUALENVS_PATH $POETRY_VIRTUALENVS_PATH
 
-COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 COPY . /app

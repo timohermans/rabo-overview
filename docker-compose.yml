@@ -4,6 +4,7 @@ services:
   web:
     build: 
       context: .
+      dockerfile: ./docker/Dockerfile
       target: development
     ports:
       - 8000:8000
