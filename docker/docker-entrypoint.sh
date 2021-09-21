@@ -16,6 +16,13 @@ then
     echo "Running DB migrations..."
     python manage.py flush --no-input
     python manage.py migrate
+    echo "Finished running migrations"
+fi
+
+if [ "$DEBUG" = "0" ]
+then
+    echo "Collecting static files..."
+    python manage.py collectstatic
 fi
 
 exec "$@"
